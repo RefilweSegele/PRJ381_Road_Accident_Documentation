@@ -5,7 +5,7 @@ function DashboardLayout({ children }) {
     return (
         <div className="app-layout">
             <Header />
-            <div className="app-layour__body">
+            <div className="app-layout__body">
                 <Sidebar />
                 <main className="app-layout__content">
                     {children}

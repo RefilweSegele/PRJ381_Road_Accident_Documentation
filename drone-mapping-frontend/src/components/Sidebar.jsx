@@ -1,11 +1,13 @@
+import { Link } from 'react-router-dom'
+
 function Sidebar() {
     return (
         <nav className="app-sidebar">
             <ul className="app-sidebar__list">
-                <li><a href="#dashboard">Dashboard</a></li>
-                <li><a href="#new-case">New Case</a></li>
-                <li><a href="#search">Search  Cases</a></li>
-                <li><a href="#login">Login</a></li>
+                <li><Link to="/">Dashboard</Link></li>
+                <li><Link to="/new-case">New Case</Link></li>
+                <li><Link to="/login">Login</Link></li>
+                <li><Link to="/register">Register</Link></li>
             </ul>
         </nav>
     )
