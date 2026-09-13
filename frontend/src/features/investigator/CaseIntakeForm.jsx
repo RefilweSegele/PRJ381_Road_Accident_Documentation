@@ -24,19 +24,32 @@ export default function CaseIntakeForm() {
   const navigate = useNavigate();
 
   const handleSubmit = (values) => {
+    // Make sure a map location has been selected
+    if (!location) {
+      message.error("Please select the accident location on the map.");
+      return;
+    }
+
     const caseData = {
       ...values,
-      accidentLocation: location,
+      accidentLocation: {
+        latitude: Number(location.lat.toFixed(6)),
+        longitude: Number(location.lng.toFixed(6)),
+      },
     };
 
     console.log("New Case:", caseData);
 
     message.success("Case created successfully!");
 
-    // Temporary navigation back to the investigator dashboard
     setTimeout(() => {
       navigate("/investigator/cases");
     }, 1000);
+  };
+
+  const handleReset = () => {
+    form.resetFields();
+    setLocation(null);
   };
 
   return (
@@ -93,7 +106,9 @@ export default function CaseIntakeForm() {
                 Pedestrian Accident
               </Select.Option>
 
-              <Select.Option value="other">Other</Select.Option>
+              <Select.Option value="other">
+                Other
+              </Select.Option>
             </Select>
           </Form.Item>
 
@@ -135,10 +150,10 @@ export default function CaseIntakeForm() {
           </Form.Item>
         </Card>
 
-        {/* LOCATION */}
+        {/* ACCIDENT LOCATION */}
         <Card title="Accident Location" style={{ marginBottom: 24 }}>
           <p>
-            Click on the map to select the accident location.
+            Click on the map to select the exact accident location.
           </p>
 
           <MapPicker
@@ -166,6 +181,12 @@ export default function CaseIntakeForm() {
               placeholder="Select a location on the map"
             />
           </Form.Item>
+
+          {!location && (
+            <p style={{ color: "#ff4d4f" }}>
+              A location must be selected before the case can be created.
+            </p>
+          )}
         </Card>
 
         {/* VEHICLES */}
@@ -173,18 +194,13 @@ export default function CaseIntakeForm() {
           <VehicleFields />
         </Card>
 
-        {/* SUBMIT */}
+        {/* ACTIONS */}
         <Space>
-          <Button
-            type="primary"
-            htmlType="submit"
-          >
+          <Button type="primary" htmlType="submit">
             Create Case
           </Button>
 
-          <Button
-            onClick={() => form.resetFields()}
-          >
+          <Button onClick={handleReset}>
             Reset
           </Button>
         </Space>
@@ -192,3 +208,4 @@ export default function CaseIntakeForm() {
     </div>
   );
 }
+        
