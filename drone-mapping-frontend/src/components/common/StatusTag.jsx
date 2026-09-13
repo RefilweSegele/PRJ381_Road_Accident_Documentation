@@ -1,33 +1,37 @@
-import { Tag } from "antd";
 import "./StatusTag.css";
 
-// Central place for case-status labels/colors so the dashboard, the
-// processing monitor, and the reviewer search page
-// all render the same status the same way.
 export const STATUS_CONFIG = {
-  draft: { color: "default", label: "Draft" },
-  uploaded: { color: "blue", label: "Imagery Uploaded" },
-  processing: { color: "gold", label: "Processing" },
-  processed: { color: "green", label: "Processed" },
-  reviewed: { color: "purple", label: "Reviewed" },
-  failed: { color: "red", label: "Failed" },
+  draft: { label: "Draft", tone: "neutral" },
+  uploaded: { label: "Imagery Uploaded", tone: "info" },
+  processing: { label: "Processing", tone: "warning" },
+  processed: { label: "Processed", tone: "success" },
+  reviewed: { label: "Reviewed", tone: "violet" },
+  failed: { label: "Failed", tone: "danger" },
+};
+
+// Hex equivalents for contexts that need a real CSS color instead of a
+// class name (e.g. Leaflet map pins, chart legends).
+export const STATUS_HEX = {
+  draft: "var(--dd-text-muted)",
+  uploaded: "var(--dd-info)",
+  processing: "var(--dd-warning)",
+  processed: "var(--dd-success)",
+  reviewed: "var(--dd-violet)",
+  failed: "var(--dd-danger)",
 };
 
 function StatusTag({ status }) {
   const config = STATUS_CONFIG[status] || {
-    color: "default",
     label: status || "Unknown",
+    tone: "neutral",
   };
-  const isProcessing = status === "processing";
 
   return (
-    <Tag
-      color={config.color}
-      className={isProcessing ? "status-tag--pulsing" : ""}
-    >
+    <span className={`dd-badge dd-badge--${config.tone}`}>
+      <span className="dd-badge__dot" />
       {config.label}
-    </Tag>
+    </span>
   );
 }
 
-export default StatusTag
+export default StatusTag;

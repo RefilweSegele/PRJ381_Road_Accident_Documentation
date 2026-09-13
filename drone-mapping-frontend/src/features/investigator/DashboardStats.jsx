@@ -1,41 +1,42 @@
 import { useQuery } from "@tanstack/react-query";
-import { Card, Skeleton } from "antd";
-import {
-  FileSearchOutlined,
-  LoadingOutlined,
-  CheckCircleOutlined,
-  ExclamationCircleOutlined,
-} from "@ant-design/icons";
+import { Skeleton } from "antd";
+import { AlertTriangle, CheckCircle2, Files, Loader2 } from "lucide-react";
 import { fetchCaseStats } from "../../api/cases";
+import "./DashboardStats.css";
 
 const STAT_CARDS = [
   {
     key: "total",
+    filterValue: "",
     label: "Total Cases",
-    icon: <FileSearchOutlined />,
-    accent: "#1677ff",
+    icon: Files,
+    tone: "primary",
   },
   {
     key: "inProgress",
+    filterValue: "inProgress",
     label: "In Progress",
-    icon: <LoadingOutlined />,
-    accent: "#faad14",
+    icon: Loader2,
+    tone: "warning",
   },
   {
     key: "processed",
+    filterValue: "processed",
     label: "Processed",
-    icon: <CheckCircleOutlined />,
-    accent: "#52c41a",
+    icon: CheckCircle2,
+    tone: "success",
   },
   {
     key: "failed",
+    filterValue: "failed",
     label: "Failed",
-    icon: <ExclamationCircleOutlined />,
-    accent: "#ff4d4f",
+    icon: AlertTriangle,
+    tone: "danger",
   },
 ];
 
-function DashboardStats() {
+
+function DashboardStats({ activeStatus, onSelectStatus }) {
   const { data, isLoading } = useQuery({
     queryKey: ["case-stats"],
     queryFn: fetchCaseStats,
@@ -43,27 +44,33 @@ function DashboardStats() {
   });
 
   return (
-    <div className="dashboard-stats">
-      {STAT_CARDS.map((card, index) => (
-        <Card
-          key={card.key}
-          className="dashboard-stats__card"
-          style={{ "--accent": card.accent, "--delay": `${index * 60}ms` }}
-          variant="borderless"
-        >
-          {isLoading ? (
-            <Skeleton active title={false} paragraph={{ rows: 2 }} />
-          ) : (
-            <>
-              <div className="dashboard-stats__icon">{card.icon}</div>
-              <div className="dashboard-stats__value">
-                {data ? data[card.key] : "—"}
-              </div>
-              <div className="dashboard-stats__label">{card.label}</div>
-            </>
-          )}
-        </Card>
-      ))}
+    <div className="dd-stats-grid">
+      {STAT_CARDS.map((card) => {
+        const Icon = card.icon;
+        const isActive = activeStatus === card.filterValue;
+        return (
+          <button
+            key={card.key}
+            type="button"
+            className={`dd-stat-card dd-stat-card--${card.tone} ${isActive ? "dd-stat-card--active" : ""}`}
+            onClick={() => onSelectStatus(isActive ? "" : card.filterValue)}
+          >
+            {isLoading ? (
+              <Skeleton active title={false} paragraph={{ rows: 2 }} />
+            ) : (
+              <>
+                <div className="dd-stat-card__icon">
+                  <Icon size={18} />
+                </div>
+                <div className="dd-stat-card__value">
+                  {data ? data[card.key] : "—"}
+                </div>
+                <div className="dd-stat-card__label">{card.label}</div>
+              </>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }

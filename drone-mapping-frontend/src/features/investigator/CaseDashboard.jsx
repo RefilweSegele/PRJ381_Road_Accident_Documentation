@@ -1,35 +1,37 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   Alert,
   Button,
   ConfigProvider,
-  Empty,
-  Input,
   message,
+  Segmented,
   Select,
-  Skeleton,
-  Space,
-  Table,
-  Typography,
 } from "antd";
 import {
-  DownloadOutlined,
-  PlusOutlined,
-  ReloadOutlined,
-  SearchOutlined,
-} from "@ant-design/icons";
+  Download,
+  LayoutGrid,
+  MapPin,
+  Plus,
+  RefreshCw,
+  Search,
+  Table as TableIcon,
+} from "lucide-react";
 
-import { fetchAllCasesForExport, fetchCases } from "../../api/cases";
-import StatusTag, { STATUS_CONFIG } from "../../components/common/StatusTag";
-import { formatDate, formatDateTime } from "../../utils/formatDate";
-import { downloadCasesAsCsv } from "../../utils/exportCsv";
+import { fetchAllFilteredCases, fetchCases } from "../../api/cases";
+import { STATUS_CONFIG } from "../../components/common/StatusTag";
 import DashboardStats from "./DashboardStats";
+import CaseTableView from "./views/CaseTableView";
+import CaseCardGrid from "./views/CaseCardGrid";
+import CaseMapView from "./views/CaseMapView";
+import CaseQuickViewDrawer from "./CaseQuickViewDrawer";
+import { downloadCasesAsCsv } from "../../utils/exportCsv";
+import { useCaseViewStore } from "./store/useCaseViewStore";
 import "./CaseDashboard.css";
 
-const { Title, Text } = Typography;
 const DEFAULT_PAGE_SIZE = 10;
+const GRID_PAGE_SIZE = 9; // fixed 3x3 grid
 
 const STATUS_OPTIONS = Object.entries(STATUS_CONFIG).map(
   ([value, { label }]) => ({
@@ -38,9 +40,15 @@ const STATUS_OPTIONS = Object.entries(STATUS_CONFIG).map(
   }),
 );
 
-const PAGE_THEME = {
+const VIEW_OPTIONS = [
+  { label: "Table", value: "table", icon: <TableIcon size={14} /> },
+  { label: "Grid", value: "grid", icon: <LayoutGrid size={14} /> },
+  { label: "Map", value: "map", icon: <MapPin size={14} /> },
+];
+
+const ANTD_THEME = {
   token: {
-    colorPrimary: "#2f6fed",
+    colorPrimary: "#3b82f6",
     borderRadius: 10,
   },
 };
@@ -57,18 +65,32 @@ function useDebouncedValue(value, delay = 400) {
 function CaseDashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [isExporting, setIsExporting] = useState(false);
+  const [quickViewCase, setQuickViewCase] = useState(null);
+
+  const view = useCaseViewStore((state) => state.view);
+  const setView = useCaseViewStore((state) => state.setView);
 
   const status = searchParams.get("status") || "";
   const search = searchParams.get("search") || "";
   const page = Number(searchParams.get("page") || 1);
-  const pageSize = Number(searchParams.get("pageSize") || DEFAULT_PAGE_SIZE);
+  const tablePageSize = Number(
+    searchParams.get("pageSize") || DEFAULT_PAGE_SIZE,
+  );
   const sortField = searchParams.get("sortField") || "updatedAt";
   const sortOrder = searchParams.get("sortOrder") || "descend";
 
+  const effectivePageSize = view === "grid" ? GRID_PAGE_SIZE : tablePageSize;
+
   const [searchInput, setSearchInput] = useState(search);
   const debouncedSearch = useDebouncedValue(searchInput);
-
   const hasActiveFilters = Boolean(status || search);
+
+  // Only raw statuses (not the grouped stat-card values) are valid Select
+  // options — if a stat card set a group filter, the Select just shows
+  // its placeholder instead of an unmatched value.
+  const selectValue = STATUS_OPTIONS.some((o) => o.value === status)
+    ? status
+    : undefined;
 
   const updateParams = useCallback(
     (updates) => {
@@ -92,16 +114,25 @@ function CaseDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch]);
 
-  const queryParams = useMemo(
-    () => ({ status, search, page, pageSize, sortField, sortOrder }),
-    [status, search, page, pageSize, sortField, sortOrder],
+  const filterParams = useMemo(
+    () => ({ status, search, sortField, sortOrder }),
+    [status, search, sortField, sortOrder],
   );
 
-  const { data, isLoading, isFetching, isError, error, refetch } = useQuery({
-    queryKey: ["cases", queryParams],
-    queryFn: () => fetchCases(queryParams),
-    placeholderData: (previousData) => previousData,
+  const pagedQuery = useQuery({
+    queryKey: ["cases", { ...filterParams, page, pageSize: effectivePageSize }],
+    queryFn: () =>
+      fetchCases({ ...filterParams, page, pageSize: effectivePageSize }),
+    placeholderData: (previous) => previous,
     staleTime: 30_000,
+    enabled: view !== "map",
+  });
+
+  const mapQuery = useQuery({
+    queryKey: ["cases-map", filterParams],
+    queryFn: () => fetchAllFilteredCases(filterParams),
+    staleTime: 30_000,
+    enabled: view === "map",
   });
 
   const handleClearFilters = () => {
@@ -109,15 +140,14 @@ function CaseDashboard() {
     updateParams({ status: "", search: "", page: 1 });
   };
 
+  const handleSelectStatCard = (filterValue) => {
+    updateParams({ status: filterValue, page: 1 });
+  };
+
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      const result = await fetchAllCasesForExport({
-        status,
-        search,
-        sortField,
-        sortOrder,
-      });
+      const result = await fetchAllFilteredCases(filterParams);
       if (!result.data.length) {
         message.warning("No cases to export for the current filters.");
         return;
@@ -131,74 +161,6 @@ function CaseDashboard() {
     }
   };
 
-  const columns = [
-    {
-      title: "Case Reference",
-      dataIndex: "caseReference",
-      key: "caseReference",
-      fixed: "left",
-      render: (text, record) => (
-        <Link to={`/investigator/cases/${record.id}/upload`}>{text}</Link>
-      ),
-    },
-    {
-      title: "Incident Location",
-      dataIndex: "incidentAddress",
-      key: "incidentAddress",
-      ellipsis: true,
-      responsive: ["md"],
-    },
-    {
-      title: "Incident Date",
-      dataIndex: "incidentDate",
-      key: "incidentDate",
-      sorter: true,
-      sortOrder: sortField === "incidentDate" ? sortOrder : null,
-      render: formatDate,
-      responsive: ["sm"],
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (value) => <StatusTag status={value} />,
-    },
-    {
-      title: "Vehicles",
-      dataIndex: "vehicleCount",
-      key: "vehicleCount",
-      align: "center",
-      width: 100,
-      responsive: ["lg"],
-    },
-    {
-      title: "Assigned Investigator",
-      dataIndex: "assignedInvestigator",
-      key: "assignedInvestigator",
-      responsive: ["lg"],
-    },
-    {
-      title: "Last Updated",
-      dataIndex: "updatedAt",
-      key: "updatedAt",
-      sorter: true,
-      sortOrder: sortField === "updatedAt" ? sortOrder : null,
-      render: formatDateTime,
-      responsive: ["md"],
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      fixed: "right",
-      render: (_, record) => (
-        <Space size="middle">
-          <Link to={`/investigator/cases/${record.id}/upload`}>Continue</Link>
-          <Link to={`/investigator/cases/${record.id}/status`}>Status</Link>
-        </Space>
-      ),
-    },
-  ];
-
   const handleTableChange = (pagination, _filters, sorter) => {
     updateParams({
       page: pagination.current,
@@ -208,119 +170,142 @@ function CaseDashboard() {
     });
   };
 
-  const emptyState = (
-    <Empty
-      description={
-        hasActiveFilters
-          ? "No cases match your current filters."
-          : "No cases have been created yet."
-      }
-    >
-      {hasActiveFilters && (
-        <Button onClick={handleClearFilters}>Clear filters</Button>
-      )}
-    </Empty>
-  );
+  const handleGridPageChange = (nextPage) => {
+    updateParams({ page: nextPage });
+  };
 
   return (
-    <ConfigProvider theme={PAGE_THEME}>
+    <ConfigProvider theme={ANTD_THEME}>
       <div className="case-dashboard">
         <div className="case-dashboard__header">
-          <Title level={3} style={{ margin: 0 }}>
-            Investigator Case Dashboard
-          </Title>
-          <Space wrap>
+          <div>
+            <h2 className="case-dashboard__title">My Cases</h2>
+            <p className="case-dashboard__title-sub">
+              {pagedQuery.data?.total ?? mapQuery.data?.total ?? 0} case
+              {(pagedQuery.data?.total ?? mapQuery.data?.total) === 1
+                ? ""
+                : "s"}{" "}
+              shown
+            </p>
+          </div>
+          <div className="case-dashboard__header-actions">
             <Button
-              icon={<DownloadOutlined />}
+              icon={<Download size={14} />}
               onClick={handleExport}
               loading={isExporting}
             >
               Export CSV
             </Button>
             <Button
-              icon={<ReloadOutlined />}
-              onClick={() => refetch()}
-              loading={isFetching}
+              icon={<RefreshCw size={14} />}
+              onClick={() =>
+                view === "map" ? mapQuery.refetch() : pagedQuery.refetch()
+              }
+              loading={pagedQuery.isFetching || mapQuery.isFetching}
             >
               Refresh
             </Button>
             <Link to="/investigator/cases/new">
-              <Button type="primary" icon={<PlusOutlined />}>
+              <Button type="primary" icon={<Plus size={14} />}>
                 New Case
               </Button>
             </Link>
-          </Space>
+          </div>
         </div>
 
-        <DashboardStats />
+        <DashboardStats
+          activeStatus={status}
+          onSelectStatus={handleSelectStatCard}
+        />
 
-        <div className="case-dashboard__filters-row">
-          <Space className="case-dashboard__filters" wrap>
-            <Input
-              allowClear
-              placeholder="Search by reference or location"
-              prefix={<SearchOutlined />}
+        <div className="dd-toolbar">
+          <div className="dd-search">
+            <Search size={15} className="dd-search__icon" />
+            <input
+              type="text"
+              placeholder="Search by reference or location…"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="case-dashboard__search-input"
             />
-            <Select
-              allowClear
-              placeholder="Filter by status"
-              className="case-dashboard__status-select"
-              value={status || undefined}
-              onChange={(value) => updateParams({ status: value, page: 1 })}
-              options={STATUS_OPTIONS}
-            />
-            {hasActiveFilters && (
-              <Button type="link" onClick={handleClearFilters}>
-                Clear filters
-              </Button>
-            )}
-          </Space>
-          {data && (
-            <Text type="secondary" className="case-dashboard__result-count">
-              {data.total} case{data.total === 1 ? "" : "s"} found
-            </Text>
+          </div>
+          <Select
+            allowClear
+            placeholder="Filter by status"
+            className="dd-status-select"
+            value={selectValue}
+            onChange={(value) => updateParams({ status: value, page: 1 })}
+            options={STATUS_OPTIONS}
+          />
+          {hasActiveFilters && (
+            <Button type="link" onClick={handleClearFilters}>
+              Clear filters
+            </Button>
           )}
+          <div className="dd-toolbar__spacer" />
+          <Segmented options={VIEW_OPTIONS} value={view} onChange={setView} />
         </div>
 
-        {isError && (
+        {(pagedQuery.isError || mapQuery.isError) && (
           <Alert
             type="error"
             showIcon
             message="Could not load cases"
-            description={error?.message || "Please try again."}
+            description={
+              pagedQuery.error?.message ||
+              mapQuery.error?.message ||
+              "Please try again."
+            }
             style={{ marginBottom: 16 }}
           />
         )}
 
-        {isLoading && !data ? (
-          <Skeleton active paragraph={{ rows: 8 }} />
-        ) : (
-          <Table
-            className="case-dashboard__table"
-            rowKey="id"
-            columns={columns}
-            dataSource={data?.data || []}
-            loading={isFetching}
-            onChange={handleTableChange}
-            rowClassName="case-dashboard__row"
-            onRow={(_, index) => ({
-              style: { "--row-delay": `${(index ?? 0) * 40}ms` },
-            })}
-            scroll={{ x: 900 }}
-            locale={{ emptyText: emptyState }}
-            pagination={{
-              current: page,
-              pageSize,
-              total: data?.total || 0,
-              showSizeChanger: true,
-              showTotal: (total) => `${total} case${total === 1 ? "" : "s"}`,
-            }}
+        {view === "table" && (
+          <CaseTableView
+            data={pagedQuery.data?.data}
+            total={pagedQuery.data?.total}
+            isLoading={pagedQuery.isLoading}
+            isFetching={pagedQuery.isFetching}
+            page={page}
+            pageSize={tablePageSize}
+            sortField={sortField}
+            sortOrder={sortOrder}
+            hasActiveFilters={hasActiveFilters}
+            onClearFilters={handleClearFilters}
+            onTableChange={handleTableChange}
+            onQuickView={setQuickViewCase}
+          />
+        )}
+
+        {view === "grid" && (
+          <CaseCardGrid
+            data={pagedQuery.data?.data}
+            total={pagedQuery.data?.total}
+            isLoading={pagedQuery.isLoading}
+            page={page}
+            pageSize={GRID_PAGE_SIZE}
+            hasActiveFilters={hasActiveFilters}
+            onClearFilters={handleClearFilters}
+            onPageChange={handleGridPageChange}
+            onQuickView={setQuickViewCase}
+          />
+        )}
+
+        {view === "map" && (
+          <CaseMapView
+            cases={mapQuery.data?.data}
+            isLoading={mapQuery.isLoading}
+            hasActiveFilters={hasActiveFilters}
+            onClearFilters={handleClearFilters}
+            onQuickView={setQuickViewCase}
           />
         )}
       </div>
+
+      <CaseQuickViewDrawer
+        open={Boolean(quickViewCase)}
+        caseRecord={quickViewCase}
+        onClose={() => setQuickViewCase(null)}
+      />
     </ConfigProvider>
   );
 }

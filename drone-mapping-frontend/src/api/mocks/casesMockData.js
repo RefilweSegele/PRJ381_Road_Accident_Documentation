@@ -1,10 +1,5 @@
 /**
  * Mock data layer for the Investigator Case Dashboard.
- *
- * This exists so the dashboard is demoable (Milestone 2 requires a working
- * prototype video) before the real GET /cases backend endpoint exists.
- * Once that endpoint is ready, delete this file and flip USE_MOCK_API to
- * false in ../cases.js.
  */
 
 const STATUSES = [
@@ -25,14 +20,22 @@ const INVESTIGATORS = [
 ];
 
 const LOCATIONS = [
-  "N1 Highway, Pretoria",
-  "M1 Off-ramp, Sandton",
-  "R21, Kempton Park",
-  "Church Street, Pretoria CBD",
-  "William Nicol Drive, Fourways",
-  "N4 Toll Road, Witbank",
-  "Voortrekker Road, Bellville",
+  { name: "N1 Highway, Pretoria", lat: -25.7069, lng: 28.2294 },
+  { name: "M1 Off-ramp, Sandton", lat: -26.1076, lng: 28.0567 },
+  { name: "R21, Kempton Park", lat: -26.1015, lng: 28.2294 },
+  { name: "Church Street, Pretoria CBD", lat: -25.7461, lng: 28.1881 },
+  { name: "William Nicol Drive, Fourways", lat: -26.0175, lng: 28.0106 },
+  { name: "N4 Toll Road, Witbank", lat: -25.8768, lng: 29.2044 },
+  { name: "Voortrekker Road, Bellville", lat: -33.8952, lng: 18.6293 },
 ];
+
+// Groups the stat cards filter by — a stat card sets `status` to one of
+// these keys, and matching cases can have ANY of the raw statuses listed.
+export const STATUS_GROUPS = {
+  inProgress: ["uploaded", "processing"],
+  processed: ["processed", "reviewed"],
+  failed: ["failed"],
+};
 
 function buildMockCases(total = 47) {
   const now = Date.now();
@@ -45,10 +48,14 @@ function buildMockCases(total = 47) {
       now - Math.max(daysAgo - 1, 0) * DAY - i * 3_600_000,
     ).toISOString();
 
+    const base = LOCATIONS[i % LOCATIONS.length];
+    const jitter = (i % 5) * 0.008 - 0.016;
+
     return {
       id: `c-${1000 + i}`,
-      caseReference: `2026-${String(1000 + i).padStart(4, "0")}`,
-      incidentAddress: LOCATIONS[i % LOCATIONS.length],
+      caseReference: `PRJ381-2026-${String(1000 + i).padStart(4, "0")}`,
+      incidentAddress: base.name,
+      location: { lat: base.lat + jitter, lng: base.lng + jitter },
       incidentDate,
       createdAt: incidentDate,
       updatedAt,
@@ -70,23 +77,14 @@ function sortCases(cases, field, order) {
   return order === "ascend" ? sorted : sorted.reverse();
 }
 
-/**
- * Simulates GET /cases?status=&search=&page=&pageSize=&sortField=&sortOrder=
- */
-export async function getMockCases({
-  status,
-  search,
-  page = 1,
-  pageSize = 10,
-  sortField = "updatedAt",
-  sortOrder = "descend",
-} = {}) {
-  await new Promise((resolve) => setTimeout(resolve, 350));
-
+function applyFilters({ status, search }) {
   let results = MOCK_CASES;
 
   if (status) {
-    results = results.filter((c) => c.status === status);
+    const group = STATUS_GROUPS[status];
+    results = group
+      ? results.filter((c) => group.includes(c.status))
+      : results.filter((c) => c.status === status);
   }
 
   if (search) {
@@ -98,7 +96,24 @@ export async function getMockCases({
     );
   }
 
-  results = sortCases(results, sortField, sortOrder);
+  return results;
+}
+
+export async function getMockCases({
+  status,
+  search,
+  page = 1,
+  pageSize = 10,
+  sortField = "updatedAt",
+  sortOrder = "descend",
+} = {}) {
+  await new Promise((resolve) => setTimeout(resolve, 350));
+
+  const results = sortCases(
+    applyFilters({ status, search }),
+    sortField,
+    sortOrder,
+  );
 
   const total = results.length;
   const start = (page - 1) * pageSize;
@@ -107,22 +122,34 @@ export async function getMockCases({
   return { data, total, page, pageSize };
 }
 
-/**
- * Aggregates counts across the full (unfiltered) mock dataset for the
- * summary stat cards. Mirrors what a real /cases/stats endpoint would do
- * with a SQL COUNT/GROUP BY on the backend.
- */
+export async function getMockAllFilteredCases({
+  status,
+  search,
+  sortField = "updatedAt",
+  sortOrder = "descend",
+} = {}) {
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  const data = sortCases(
+    applyFilters({ status, search }),
+    sortField,
+    sortOrder,
+  );
+  return { data, total: data.length };
+}
+
 export async function getMockCaseStats() {
   await new Promise((resolve) => setTimeout(resolve, 250));
 
   const total = MOCK_CASES.length;
-  const inProgress = MOCK_CASES.filter(
-    (c) => c.status === "uploaded" || c.status === "processing",
+  const inProgress = MOCK_CASES.filter((c) =>
+    STATUS_GROUPS.inProgress.includes(c.status),
   ).length;
-  const processed = MOCK_CASES.filter(
-    (c) => c.status === "processed" || c.status === "reviewed",
+  const processed = MOCK_CASES.filter((c) =>
+    STATUS_GROUPS.processed.includes(c.status),
   ).length;
-  const failed = MOCK_CASES.filter((c) => c.status === "failed").length;
+  const failed = MOCK_CASES.filter((c) =>
+    STATUS_GROUPS.failed.includes(c.status),
+  ).length;
 
   return { total, inProgress, processed, failed };
 }
