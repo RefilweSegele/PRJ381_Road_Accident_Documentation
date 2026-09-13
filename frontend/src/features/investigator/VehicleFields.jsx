@@ -3,8 +3,21 @@ import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 
 export default function VehicleFields() {
   return (
-    <Form.List name="vehicles">
-      {(fields, { add, remove }) => (
+    <Form.List
+      name="vehicles"
+      rules={[
+        {
+          validator: async (_, vehicles) => {
+            if (!vehicles || vehicles.length < 1) {
+              return Promise.reject(
+                new Error("Please add at least one vehicle")
+              );
+            }
+          },
+        },
+      ]}
+    >
+      {(fields, { add, remove }, { errors }) => (
         <>
           {fields.map(({ key, name, ...restField }) => (
             <Card
@@ -84,6 +97,8 @@ export default function VehicleFields() {
             </Card>
           ))}
 
+          <Form.ErrorList errors={errors} />
+
           <Button
             type="dashed"
             onClick={() => add()}
@@ -97,3 +112,6 @@ export default function VehicleFields() {
     </Form.List>
   );
 }
+               
+                   
+           
