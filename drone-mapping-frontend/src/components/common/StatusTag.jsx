@@ -9,8 +9,6 @@ export const STATUS_CONFIG = {
   failed: { label: "Failed", tone: "danger" },
 };
 
-// Hex equivalents for contexts that need a real CSS color instead of a
-// class name (e.g. Leaflet map pins, chart legends).
 export const STATUS_HEX = {
   draft: "var(--dd-text-muted)",
   uploaded: "var(--dd-info)",

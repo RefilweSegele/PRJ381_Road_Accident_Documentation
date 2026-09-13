@@ -3,12 +3,7 @@ import { Button, Descriptions, Drawer, Space } from "antd";
 import StatusTag from "../../components/common/StatusTag";
 import { formatDate, formatDateTime } from "../../utils/formatDate";
 
-/*
- Opens when the eye icon is clicked on any of the three views (table row,
- card, or map pin). Shows the full case snapshot — status plus every
- other field — and provides the actual navigation actions that used to
- live as separate text links in the table row.
- */
+
 function CaseQuickViewDrawer({ open, caseRecord, onClose }) {
   return (
     <Drawer

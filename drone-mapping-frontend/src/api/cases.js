@@ -23,11 +23,6 @@ export async function fetchCaseStats() {
   return data;
 }
 
-/*
- Fetches every case matching the current filters, ignoring pagination.
- Used by the CSV export button and the map view (which wants to plot
- all matching cases at once, not just the current page).
- */
 export async function fetchAllFilteredCases({
   status,
   search,

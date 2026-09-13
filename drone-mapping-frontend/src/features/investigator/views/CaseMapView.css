@@ -7,8 +7,6 @@
   width: 100%;
 }
 
-/* Defensive fix: some global CSS resets (img { max-width: 100% }) break
-   Leaflet's tile <img> sizing, leaving the map looking blank/broken. */
 .dd-map-view__container .leaflet-container,
 .dd-map-view__container .leaflet-tile,
 .dd-map-view__container img {

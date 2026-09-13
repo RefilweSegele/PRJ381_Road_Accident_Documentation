@@ -12,7 +12,6 @@ const apiClient = axios.create({
   },
 });
 
-// Request interceptor — attach auth token if we ever add one.
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem("auth_token");
   if (token) {

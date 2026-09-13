@@ -85,9 +85,6 @@ function CaseDashboard() {
   const debouncedSearch = useDebouncedValue(searchInput);
   const hasActiveFilters = Boolean(status || search);
 
-  // Only raw statuses (not the grouped stat-card values) are valid Select
-  // options — if a stat card set a group filter, the Select just shows
-  // its placeholder instead of an unmatched value.
   const selectValue = STATUS_OPTIONS.some((o) => o.value === status)
     ? status
     : undefined;
