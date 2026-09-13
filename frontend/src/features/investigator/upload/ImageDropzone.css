@@ -1,0 +1,35 @@
+.dropzone-card{
+    margin-bottom: 20px;
+}
+
+.dropzone-area{
+    border: 2px dashed #1890ff;
+    padding: 40px;
+    text-align: center;
+    background-color: #fafafa;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
+.dropzone-area.active{
+    background-color: #e6f7ff;
+}
+
+.dropzone-icon{
+    font-size: 48px;
+    color: #1890ff;
+}
+
+.thumnail-grid {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.thumnail-image {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 4px;
+}
