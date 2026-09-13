@@ -13,7 +13,7 @@ function App() {
         <Route path="/" element={<h2>Dashboard Overview</h2>} />
         <Route path="/login" element={<LoginForm />} />
         <Route path="/register" element={<RegisterForm />} />
-        <Route path="/new-case" element={<CaseEntryForm />} />
+        <Route path="/investigator/cases/new" element={<CaseEntryForm />} />{" "}
         <Route path="/investigator/cases" element={<CaseDashboard />} />
       </Routes>
     </DashboardLayout>

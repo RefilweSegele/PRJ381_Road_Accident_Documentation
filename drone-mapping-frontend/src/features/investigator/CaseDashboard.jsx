@@ -1,19 +1,34 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Alert, Button, Input, Select, Space, Table, Typography } from "antd";
 import {
+  Alert,
+  Button,
+  ConfigProvider,
+  Empty,
+  Input,
+  message,
+  Select,
+  Skeleton,
+  Space,
+  Table,
+  Typography,
+} from "antd";
+import {
+  DownloadOutlined,
   PlusOutlined,
   ReloadOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
 
-import { fetchCases } from "../../api/cases";
+import { fetchAllCasesForExport, fetchCases } from "../../api/cases";
 import StatusTag, { STATUS_CONFIG } from "../../components/common/StatusTag";
 import { formatDate, formatDateTime } from "../../utils/formatDate";
+import { downloadCasesAsCsv } from "../../utils/exportCsv";
+import DashboardStats from "./DashboardStats";
 import "./CaseDashboard.css";
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 const DEFAULT_PAGE_SIZE = 10;
 
 const STATUS_OPTIONS = Object.entries(STATUS_CONFIG).map(
@@ -23,10 +38,13 @@ const STATUS_OPTIONS = Object.entries(STATUS_CONFIG).map(
   }),
 );
 
-/*
- Debounces a fast-changing value (e.g. keystrokes) so we don't refetch on
- * every character typed into the search box.
- */
+const PAGE_THEME = {
+  token: {
+    colorPrimary: "#2f6fed",
+    borderRadius: 10,
+  },
+};
+
 function useDebouncedValue(value, delay = 400) {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => {
@@ -36,18 +54,9 @@ function useDebouncedValue(value, delay = 400) {
   return debounced;
 }
 
-/*
- Page 1: Investigator Dashboard (/investigator/cases)
- 
-  - TanStack Query drives fetching/caching of the case list.
-  - Filters (status, search, page, pageSize, sort) live in the URL query
-    string via useSearchParams, so they persist across refreshes and are
-    shareable/bookmarkable — this is the "persistent filter state"
-    requirement from the task spec.
- */
-
 function CaseDashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const [isExporting, setIsExporting] = useState(false);
 
   const status = searchParams.get("status") || "";
   const search = searchParams.get("search") || "";
@@ -56,10 +65,10 @@ function CaseDashboard() {
   const sortField = searchParams.get("sortField") || "updatedAt";
   const sortOrder = searchParams.get("sortOrder") || "descend";
 
-  // Local input state so typing feels instant; the URL (and the query) only
-  // update once the user pauses typing.
   const [searchInput, setSearchInput] = useState(search);
   const debouncedSearch = useDebouncedValue(searchInput);
+
+  const hasActiveFilters = Boolean(status || search);
 
   const updateParams = useCallback(
     (updates) => {
@@ -91,15 +100,43 @@ function CaseDashboard() {
   const { data, isLoading, isFetching, isError, error, refetch } = useQuery({
     queryKey: ["cases", queryParams],
     queryFn: () => fetchCases(queryParams),
-    placeholderData: (previousData) => previousData, // keep old rows visible while refetching
+    placeholderData: (previousData) => previousData,
     staleTime: 30_000,
   });
+
+  const handleClearFilters = () => {
+    setSearchInput("");
+    updateParams({ status: "", search: "", page: 1 });
+  };
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const result = await fetchAllCasesForExport({
+        status,
+        search,
+        sortField,
+        sortOrder,
+      });
+      if (!result.data.length) {
+        message.warning("No cases to export for the current filters.");
+        return;
+      }
+      downloadCasesAsCsv(result.data, `cases-export-${Date.now()}.csv`);
+      message.success(`Exported ${result.data.length} case(s).`);
+    } catch (err) {
+      message.error("Export failed. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const columns = [
     {
       title: "Case Reference",
       dataIndex: "caseReference",
       key: "caseReference",
+      fixed: "left",
       render: (text, record) => (
         <Link to={`/investigator/cases/${record.id}/upload`}>{text}</Link>
       ),
@@ -109,6 +146,7 @@ function CaseDashboard() {
       dataIndex: "incidentAddress",
       key: "incidentAddress",
       ellipsis: true,
+      responsive: ["md"],
     },
     {
       title: "Incident Date",
@@ -117,6 +155,7 @@ function CaseDashboard() {
       sorter: true,
       sortOrder: sortField === "incidentDate" ? sortOrder : null,
       render: formatDate,
+      responsive: ["sm"],
     },
     {
       title: "Status",
@@ -130,11 +169,13 @@ function CaseDashboard() {
       key: "vehicleCount",
       align: "center",
       width: 100,
+      responsive: ["lg"],
     },
     {
       title: "Assigned Investigator",
       dataIndex: "assignedInvestigator",
       key: "assignedInvestigator",
+      responsive: ["lg"],
     },
     {
       title: "Last Updated",
@@ -143,10 +184,12 @@ function CaseDashboard() {
       sorter: true,
       sortOrder: sortField === "updatedAt" ? sortOrder : null,
       render: formatDateTime,
+      responsive: ["md"],
     },
     {
       title: "Actions",
       key: "actions",
+      fixed: "right",
       render: (_, record) => (
         <Space size="middle">
           <Link to={`/investigator/cases/${record.id}/upload`}>Continue</Link>
@@ -165,72 +208,120 @@ function CaseDashboard() {
     });
   };
 
-  return (
-    <div className="case-dashboard">
-      <div className="case-dashboard__header">
-        <Title level={3} style={{ margin: 0 }}>
-          Investigator Case Dashboard
-        </Title>
-        <Space>
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={() => refetch()}
-            loading={isFetching}
-          >
-            Refresh
-          </Button>
-          <Link to="/investigator/cases/new">
-            <Button type="primary" icon={<PlusOutlined />}>
-              New Case
-            </Button>
-          </Link>
-        </Space>
-      </div>
-
-      <Space className="case-dashboard__filters" wrap>
-        <Input
-          allowClear
-          placeholder="Search by reference or location"
-          prefix={<SearchOutlined />}
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          style={{ width: 280 }}
-        />
-        <Select
-          allowClear
-          placeholder="Filter by status"
-          style={{ width: 200 }}
-          value={status || undefined}
-          onChange={(value) => updateParams({ status: value, page: 1 })}
-          options={STATUS_OPTIONS}
-        />
-      </Space>
-
-      {isError && (
-        <Alert
-          type="error"
-          showIcon
-          message="Could not load cases"
-          description={error?.message || "Please try again."}
-          style={{ marginBottom: 16 }}
-        />
+  const emptyState = (
+    <Empty
+      description={
+        hasActiveFilters
+          ? "No cases match your current filters."
+          : "No cases have been created yet."
+      }
+    >
+      {hasActiveFilters && (
+        <Button onClick={handleClearFilters}>Clear filters</Button>
       )}
+    </Empty>
+  );
 
-      <Table
-        rowKey="id"
-        columns={columns}
-        dataSource={data?.data || []}
-        loading={isLoading}
-        onChange={handleTableChange}
-        pagination={{
-          current: page,
-          pageSize,
-          total: data?.total || 0,
-          showSizeChanger: true,
-          showTotal: (total) => `${total} case${total === 1 ? "" : "s"}`,
-        }}
-      />
-    </div>
+  return (
+    <ConfigProvider theme={PAGE_THEME}>
+      <div className="case-dashboard">
+        <div className="case-dashboard__header">
+          <Title level={3} style={{ margin: 0 }}>
+            Investigator Case Dashboard
+          </Title>
+          <Space wrap>
+            <Button
+              icon={<DownloadOutlined />}
+              onClick={handleExport}
+              loading={isExporting}
+            >
+              Export CSV
+            </Button>
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={() => refetch()}
+              loading={isFetching}
+            >
+              Refresh
+            </Button>
+            <Link to="/investigator/cases/new">
+              <Button type="primary" icon={<PlusOutlined />}>
+                New Case
+              </Button>
+            </Link>
+          </Space>
+        </div>
+
+        <DashboardStats />
+
+        <div className="case-dashboard__filters-row">
+          <Space className="case-dashboard__filters" wrap>
+            <Input
+              allowClear
+              placeholder="Search by reference or location"
+              prefix={<SearchOutlined />}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="case-dashboard__search-input"
+            />
+            <Select
+              allowClear
+              placeholder="Filter by status"
+              className="case-dashboard__status-select"
+              value={status || undefined}
+              onChange={(value) => updateParams({ status: value, page: 1 })}
+              options={STATUS_OPTIONS}
+            />
+            {hasActiveFilters && (
+              <Button type="link" onClick={handleClearFilters}>
+                Clear filters
+              </Button>
+            )}
+          </Space>
+          {data && (
+            <Text type="secondary" className="case-dashboard__result-count">
+              {data.total} case{data.total === 1 ? "" : "s"} found
+            </Text>
+          )}
+        </div>
+
+        {isError && (
+          <Alert
+            type="error"
+            showIcon
+            message="Could not load cases"
+            description={error?.message || "Please try again."}
+            style={{ marginBottom: 16 }}
+          />
+        )}
+
+        {isLoading && !data ? (
+          <Skeleton active paragraph={{ rows: 8 }} />
+        ) : (
+          <Table
+            className="case-dashboard__table"
+            rowKey="id"
+            columns={columns}
+            dataSource={data?.data || []}
+            loading={isFetching}
+            onChange={handleTableChange}
+            rowClassName="case-dashboard__row"
+            onRow={(_, index) => ({
+              style: { "--row-delay": `${(index ?? 0) * 40}ms` },
+            })}
+            scroll={{ x: 900 }}
+            locale={{ emptyText: emptyState }}
+            pagination={{
+              current: page,
+              pageSize,
+              total: data?.total || 0,
+              showSizeChanger: true,
+              showTotal: (total) => `${total} case${total === 1 ? "" : "s"}`,
+            }}
+          />
+        )}
+      </div>
+    </ConfigProvider>
   );
 }
 

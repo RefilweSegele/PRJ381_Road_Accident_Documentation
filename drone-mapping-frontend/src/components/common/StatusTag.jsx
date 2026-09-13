@@ -1,4 +1,5 @@
 import { Tag } from "antd";
+import "./StatusTag.css";
 
 // Central place for case-status labels/colors so the dashboard, the
 // processing monitor, and the reviewer search page
@@ -17,7 +18,16 @@ function StatusTag({ status }) {
     color: "default",
     label: status || "Unknown",
   };
-  return <Tag color={config.color}>{config.label}</Tag>;
+  const isProcessing = status === "processing";
+
+  return (
+    <Tag
+      color={config.color}
+      className={isProcessing ? "status-tag--pulsing" : ""}
+    >
+      {config.label}
+    </Tag>
+  );
 }
 
-export default StatusTag;
+export default StatusTag

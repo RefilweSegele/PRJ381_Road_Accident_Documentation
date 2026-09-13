@@ -1,12 +1,184 @@
+.case-dashboard {
+  animation: dashboardFadeIn 0.35s ease-out;
+}
+
+@keyframes dashboardFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .case-dashboard__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+}
+
+.case-dashboard__header button {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.case-dashboard__header button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(47, 111, 237, 0.18);
+}
+
+.case-dashboard__filters-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
 }
 
 .case-dashboard__filters {
-  margin-bottom: 16px;
+  flex: 1;
+}
+
+.case-dashboard__search-input {
+  width: 280px;
+  max-width: 100%;
+}
+
+.case-dashboard__status-select {
+  width: 200px;
+  max-width: 100%;
+}
+
+.case-dashboard__result-count {
+  white-space: nowrap;
+}
+
+.case-dashboard__filters .ant-input-affix-wrapper,
+.case-dashboard__filters .ant-select-selector {
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.case-dashboard__filters .ant-input-affix-wrapper:hover,
+.case-dashboard__filters .ant-select-selector:hover {
+  box-shadow: 0 2px 8px rgba(47, 111, 237, 0.12);
+}
+
+/* --- Stat cards --- */
+
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.dashboard-stats__card {
+  border-radius: 14px;
+  border-top: 3px solid var(--accent, #2f6fed);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  animation: statCardIn 0.4s ease both;
+  animation-delay: var(--delay, 0ms);
+  min-height: 96px;
+}
+
+.dashboard-stats__card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes statCardIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dashboard-stats__icon {
+  font-size: 20px;
+  color: var(--accent, #2f6fed);
+  margin-bottom: 8px;
+}
+
+.dashboard-stats__value {
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.dashboard-stats__label {
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+/* --- Table polish --- */
+
+.case-dashboard__table {
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.case-dashboard__row {
+  animation: rowFadeIn 0.3s ease both;
+  animation-delay: var(--row-delay, 0ms);
+  transition: background-color 0.15s ease;
+}
+
+@keyframes rowFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.case-dashboard__table .ant-table-tbody > tr:hover > td {
+  background-color: rgba(47, 111, 237, 0.06) !important;
+}
+
+/* --- Mobile responsiveness --- */
+
+@media (max-width: 576px) {
+  .case-dashboard__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .case-dashboard__header > * {
+    width: 100%;
+  }
+
+  .case-dashboard__header .ant-space {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .case-dashboard__header .ant-space-item,
+  .case-dashboard__header .ant-btn,
+  .case-dashboard__header a {
+    flex: 1 1 auto;
+  }
+
+  .case-dashboard__search-input,
+  .case-dashboard__status-select {
+    width: 100%;
+  }
+
+  .case-dashboard__filters-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .case-dashboard__result-count {
+    text-align: right;
+  }
+}
+
+/* Respect users who've asked their OS to reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  .case-dashboard,
+  .dashboard-stats__card,
+  .case-dashboard__row {
+    animation: none !important;
+  }
+  .case-dashboard__header button:hover,
+  .dashboard-stats__card:hover {
+    transform: none;
+  }
 }

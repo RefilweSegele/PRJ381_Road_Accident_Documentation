@@ -1,11 +1,10 @@
-/*
- Mock data layer for the Investigator Case Dashboard.
- 
- This exists so the dashboard is demoable (Milestone 2 requires a working
- prototype video) before the real GET /cases backend endpoint exists.
- Once that endpoint is ready, this file should be deleted and flip USE_MOCK_API to
- false in ../cases.js — the response shape below was designed to match
- what a real paginated endpoint should return.
+/**
+ * Mock data layer for the Investigator Case Dashboard.
+ *
+ * This exists so the dashboard is demoable (Milestone 2 requires a working
+ * prototype video) before the real GET /cases backend endpoint exists.
+ * Once that endpoint is ready, delete this file and flip USE_MOCK_API to
+ * false in ../cases.js.
  */
 
 const STATUSES = [
@@ -48,7 +47,7 @@ function buildMockCases(total = 47) {
 
     return {
       id: `c-${1000 + i}`,
-      caseReference: `PRJ381-2026-${String(1000 + i).padStart(4, "0")}`,
+      caseReference: `2026-${String(1000 + i).padStart(4, "0")}`,
       incidentAddress: LOCATIONS[i % LOCATIONS.length],
       incidentDate,
       createdAt: incidentDate,
@@ -71,8 +70,8 @@ function sortCases(cases, field, order) {
   return order === "ascend" ? sorted : sorted.reverse();
 }
 
-/*
- Simulates GET /cases?status=&search=&page=&pageSize=&sortField=&sortOrder=
+/**
+ * Simulates GET /cases?status=&search=&page=&pageSize=&sortField=&sortOrder=
  */
 export async function getMockCases({
   status,
@@ -82,7 +81,6 @@ export async function getMockCases({
   sortField = "updatedAt",
   sortOrder = "descend",
 } = {}) {
-  // Simulate network latency so loading states are visible in the demo.
   await new Promise((resolve) => setTimeout(resolve, 350));
 
   let results = MOCK_CASES;
@@ -107,4 +105,24 @@ export async function getMockCases({
   const data = results.slice(start, start + pageSize);
 
   return { data, total, page, pageSize };
+}
+
+/**
+ * Aggregates counts across the full (unfiltered) mock dataset for the
+ * summary stat cards. Mirrors what a real /cases/stats endpoint would do
+ * with a SQL COUNT/GROUP BY on the backend.
+ */
+export async function getMockCaseStats() {
+  await new Promise((resolve) => setTimeout(resolve, 250));
+
+  const total = MOCK_CASES.length;
+  const inProgress = MOCK_CASES.filter(
+    (c) => c.status === "uploaded" || c.status === "processing",
+  ).length;
+  const processed = MOCK_CASES.filter(
+    (c) => c.status === "processed" || c.status === "reviewed",
+  ).length;
+  const failed = MOCK_CASES.filter((c) => c.status === "failed").length;
+
+  return { total, inProgress, processed, failed };
 }
