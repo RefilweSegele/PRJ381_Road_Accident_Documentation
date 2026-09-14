@@ -1,0 +1,56 @@
+# =========================
+# Node.js / React (Frontend & Backend)
+# =========================
+node_modules/
+npm-debug.log
+yarn-error.log
+yarn-debug.log
+
+# =========================
+# Build Outputs (Frontend Vite/React)
+# =========================
+dist/
+build/
+.next/
+out/
+
+# =========================
+# Environment Variables & Secrets
+# =========================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# =========================
+# Python (For Phase 3 OpenDroneMap Scripts)
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+
+# =========================
+# DAIAS Drone Data & 3D Models
+# (Prevents crashing GitHub with massive point clouds)
+# =========================
+*.obj
+*.gltf
+*.glb
+*.las
+*.laz
+*.tif
+*.orthophoto
+/backend/uploads/
+/public/assets/raw-images/
+
+# =========================
+# OS / Editor Files
+# =========================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
