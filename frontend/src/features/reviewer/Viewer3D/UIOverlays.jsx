@@ -7,9 +7,9 @@ export default function UIOverlays({measurementDistance, damageBoxes =[] }) {
         <div
             style={{
                 position: "absolute",
-                top: 12,
+                top: 60,
                 left: 12,
-                background: "0,0,0,0.6",
+                background: "rgba(0,0,0,0.6)",
                 color: "white",
                 padding: "8px 12px",
                 borderRadius: 6,

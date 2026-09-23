@@ -15,8 +15,8 @@ export default function Raycaster({ children, onMeasurementChange }) {
             const next =prev.length >= 2 ? [point] : [...prev, point];
 
             if (next.length === 2) {
-                constdistance = next[0].distanceTo(next[1]);
-                onMeasurementChange(distance, next);
+                const distance = next[0].distanceTo(next[1]);
+                onMeasurementChange?.(distance, next);
             }
             return next;
         });
