@@ -1,6 +1,7 @@
 import React from "react";
 import AppRoutes from "./router";
 import 'antd/dist/reset.css'; //Ensures Ant Design stryles
+import CaseDetailPage from "./features/reviewer/CaseDetailPage";
 
 function App() {
   return (
@@ -8,6 +9,7 @@ function App() {
       <AppRoutes />
     </div>
   );
+  //return <CaseDetailPage />;
 }
 
 export default App;
