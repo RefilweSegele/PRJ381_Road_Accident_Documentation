@@ -6,7 +6,7 @@ function App() {
   return (
     <div className="App">
         {/* Temporarily rendering Member 4s work*/} 
-        <UploadWizard/>
+        <UploadWizard />
     </div>
   );
 }
