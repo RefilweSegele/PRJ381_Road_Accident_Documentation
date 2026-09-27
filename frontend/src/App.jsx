@@ -1,5 +1,5 @@
 import React from "react";
-import CaseDashboard from "./features/investigator/upload/UploadWizard";
+import UploadWizard from "./features/investigator/upload/UploadWizard";
 import 'antd/dist/reset.css'; //Ensures Ant Design stryles
 
 function App() {
