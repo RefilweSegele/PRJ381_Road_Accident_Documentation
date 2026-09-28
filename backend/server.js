@@ -5,6 +5,7 @@ require("dotenv").config();
 const caseRoutes = require("./src/routes/case.routes");
 const authRoutes = require("./src/routes/auth.routes");
 
+
 const app = express();
 
 // Middleware
@@ -18,6 +19,8 @@ app.get("/", (req, res) => {
 
 // Case Intake API 
 app.use("/api/cases", caseRoutes);
+
+
 
 // Centralized error handler — catches anything passed to next(err)
 // from the controllers instead of letting the request hang.
