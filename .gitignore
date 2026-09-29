@@ -45,6 +45,7 @@ env/
 *.tif
 *.orthophoto
 /backend/uploads/
+/backend/tmp/
 /public/assets/raw-images/
 
 # =========================
