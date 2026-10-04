@@ -6,6 +6,12 @@ const caseRoutes = require("./src/routes/case.routes");
 const authRoutes = require("./src/routes/auth.routes");
 
 
+//Routes for Uploading and Listing Images for a Case
+const imageRoutes = require("./src/routes/Image.routes");
+const uploadConfig = require("./src/config/upload");
+const { uploadErrorHandler } = require("./src/middleware/uploadErrorHandler");
+
+
 const app = express();
 
 // Middleware
@@ -17,10 +23,20 @@ app.get("/", (req, res) => {
   res.send("API is running...");
 });
 
+// Serves files stored by the local-disk storage driver so the image URLs
+// returned by the upload endpoint resolve in dev. Not needed with STORAGE_DRIVER=s3.
+app.use("/static/uploads", express.static(uploadConfig.LOCAL_ROOT));
+
 // Case Intake API 
 app.use("/api/cases", caseRoutes);
 
+// Image Upload & Storage API (POST /api/cases/:id/upload/images, GET /api/cases/:id/images)
+app.use("/api/cases", imageRoutes);
 
+// Upload errors (multer limits, bad file type, case not found) -> proper
+// 400/404/413/415. Must stay BEFORE the generic handler below; it passes
+// anything it doesn't recognise on to it.
+app.use(uploadErrorHandler);
 
 // Centralized error handler — catches anything passed to next(err)
 // from the controllers instead of letting the request hang.
