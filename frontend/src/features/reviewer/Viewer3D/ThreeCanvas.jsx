@@ -2,6 +2,7 @@ import React, { Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useGLTF, Bounds } from "@react-three/drei";
 import Raycaster from "./Raycaster";
+import DamageBoxes from "./DamageBoxes";
 
 //loads & renders the actual restructed model
 //modelURL comes from the case's ODM output
@@ -25,7 +26,7 @@ function LoadingBox() {
     );
 }
 
-export default function ThreeCanvas ({ modelUrl, onMeasurementChange }) {
+export default function ThreeCanvas ({ modelUrl, onMeasurementChange, damageBoxes = [] }) {
     return (
         <div style={{ width: "100%", height: "600px", position: "relative" }}>
             <Canvas camera={{ position: [3, 3, 3], fov: 50 }}>
@@ -41,6 +42,7 @@ export default function ThreeCanvas ({ modelUrl, onMeasurementChange }) {
                                     <SceneModel modelUrl={modelUrl} onSurfaceClick={handleClick} />
                                 )}
                             </Raycaster>
+                            <DamageBoxes damageBoxes={damageBoxes} />
                         </Bounds>
                     ) : (
                         <LoadingBox />

@@ -22,7 +22,7 @@ export default function CaseDetailPage() {
             },
         },
         {
-            damageType: "Windshielf Structural Crack",
+            damageType: "Windshield Structural Crack",
             confidence: 0.8810,
             boundingBox: {
                 unit: "meters",
@@ -36,7 +36,8 @@ export default function CaseDetailPage() {
     return (
         <div style={{ position: "relative" }}>
             <h1 style={{ margin: "12px"}}>Case {id} - 3D Viewer</h1>
-            <ThreeCanvas modelUrl={modelUrl} onMeasurementChange={setMeasurementDistance} /> 
+            <ThreeCanvas modelUrl={modelUrl} onMeasurementChange={setMeasurementDistance} 
+            damageBoxes={sampleDamageBoxes} /> 
             <UIOverlays measurementDistance={measurementDistance} damageBoxes={sampleDamageBoxes} />
         </div>
     );
