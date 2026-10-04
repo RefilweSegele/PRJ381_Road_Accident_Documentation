@@ -1,14 +1,7 @@
-import React from "react";
-import UploadWizard from "./features/investigator/upload/UploadWizard";
-import 'antd/dist/reset.css'; //Ensures Ant Design stryles
+import React from 'react';
+import { RouterProvider } from 'react-router-dom';
+import router from './router';
 
-function App() {
-  return (
-    <div className="App">
-        {/* Temporarily rendering Member 4s work*/} 
-        <UploadWizard />
-    </div>
-  );
+export default function App() {
+  return <RouterProvider router={router} />;
 }
-
-export default App;
