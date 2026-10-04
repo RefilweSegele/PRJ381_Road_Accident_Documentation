@@ -1,8 +1,10 @@
-import React from "react";
+import React, {useState} from "react";
 
-//plain HTML overlay positioned on top of the canvas (not inside the 3D scene)
-//damageBoxes will eventually come from the ML classification service
+//damageBoxes: array of { damageType, confidence, boundingBox } from the detection table. boundingBox is in 3D model-space meters - the overlay shows a readable list rather than projecting onto the 2D canvas
+
 export default function UIOverlays({measurementDistance, damageBoxes =[] }) {
+    const [expanded, setExpanded] = useState(false);
+
     return (
         <div
             style={{
@@ -14,14 +16,30 @@ export default function UIOverlays({measurementDistance, damageBoxes =[] }) {
                 padding: "8px 12px",
                 borderRadius: 6,
                 fontSize: 13,
-                pointerEvents: "none",
+                maxWidth: 280,
+                pointerEvents: expanded ? "auto" : "none",
             }}
         >
             <div>
                 Measurement:{" "}
                 {measurementDistance != null ? `${measurementDistance.toFixed(2)} m` : "click 2 points"}
             </div>
-            <div>Damage regions detected: {damageBoxes.length}</div>
+
+            <div style={{ cursor: damageBoxes.length ? "pointer" : "default", pointerEvents: "auto" }}
+            onClick={() => damageBoxes.length && setExpanded((e) => !e)}>
+                Damage regions detected: {damageBoxes.length}
+                {damageBoxes.length > 0 && (expanded ? " ▲" : " ▼")}
+            </div>
+
+            {expanded && (
+                <ul style={{ margin: "6px 0 0", paddingLeft: 16 }}>
+                    {damageBoxes.map((d, i) => (
+                        <li key={i} style={{ marginBottom: 4 }}>
+                            {d.damageType} - {(d.confidence * 100).toFixed(1)}% confidence
+                        </li>
+                    ))}
+                </ul>
+            )}
         </div>
     );
 } 

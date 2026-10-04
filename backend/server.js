@@ -3,6 +3,8 @@ const cors = require("cors");
 require("dotenv").config();
 
 const caseRoutes = require("./src/routes/case.routes");
+const authRoutes = require("./src/routes/auth.routes");
+
 
 //Routes for Uploading and Listing Images for a Case
 const imageRoutes = require("./src/routes/Image.routes");
