@@ -1,7 +1,7 @@
 // diskStorage (NOT memoryStorage): each file streams to a temp file as it
 // arrives, so a 150-image batch is never fully held in RAM.
 const multer = require("multer");
-const fs = require("fs/promises");
+const fs = require("fs"); // sync mkdirSync lives on "fs", not "fs/promises"
 const crypto = require("crypto");
 const config = require("../config/upload");
 

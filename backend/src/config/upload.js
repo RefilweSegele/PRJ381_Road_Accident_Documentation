@@ -3,7 +3,7 @@ const path = require('path');
 
 const BACKEND_ROOT = path.resolve(__dirname, "..", "..");
 
-//What does this do?
+//Parses an env var as an integer, falling back if it's missing or not a number
 const toInt = (value, fallback) => {
     const n = parseInt(value, 10);
     return Number.isNaN(n) ? fallback : n;
@@ -14,12 +14,13 @@ module.exports = {
     MAX_FILES: toInt(process.env.UPLOAD_MAX_FILES, 150),
 
     // DJI Neo 12MP JPEGs are ~3.5MB, so 15MB is a reasonable limit for a single file.
-    MAX_FILES_SIZE_BYTES: toInt(process.env.UPLOAD_MAX_FILE_SIZE_BYTES, 15) * 1024 * 1024,
-
+    MAX_FILES_SIZE_BYTES: toInt(process.env.UPLOAD_MAX_FILE_SIZE_MB, 15) * 1024 * 1024,
+    
     // 'local' works today. 's3' is a template adapter (storage/S3StorageAdapter.js).
     STORAGE_DRIVER: process.env.UPLOAD_STORAGE_DRIVER || 'local',
     TEMP_DIR: process.env.UPLOAD_TEMP_DIR || path.join(BACKEND_ROOT, 'tmp', 'uploads'),
-    LOCAL_ROOT: process.env.UPLOAD_LOCAL_ROOT || path.join(BACKEND_ROOT, 'uploads'),
+
+    LOCAL_ROOT: process.env.UPLOAD_LOCAL_ROOT || path.join(BACKEND_ROOT, "uploads"),    
     PUNLIC_BASE_URL: 
         process.env.UPLOAD_PUBLIC_BASE_URL || 
         'http://localhost:${process.env.PORT || 5000}/static/uploads',
