@@ -1,0 +1,63 @@
+.dd-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 900px) {
+  .dd-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .dd-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dd-case-card {
+  background: var(--dd-surface);
+  border: 1px solid var(--dd-border);
+  border-radius: var(--dd-radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: all 0.15s ease;
+}
+
+.dd-case-card:hover {
+  border-color: var(--dd-border-strong);
+  transform: translateY(-2px);
+  box-shadow: var(--dd-shadow);
+}
+
+.dd-case-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dd-case-card__meta {
+  font-size: 11px;
+  color: var(--dd-text-muted);
+}
+
+.dd-case-card__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--dd-border);
+  font-size: 11px;
+  color: var(--dd-text-muted);
+}
+
+.dd-cards-grid__pagination {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}

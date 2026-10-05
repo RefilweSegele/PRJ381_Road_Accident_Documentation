@@ -1,0 +1,69 @@
+.dd-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.dd-stat-card {
+  background: var(--dd-surface);
+  border: 1px solid var(--dd-border);
+  border-radius: var(--dd-radius);
+  padding: 16px 18px;
+  transition: all 0.15s ease;
+  min-height: 92px;
+  text-align: left;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.dd-stat-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  height: 3px;
+}
+
+.dd-stat-card--primary::before { background: var(--dd-primary); }
+.dd-stat-card--warning::before { background: var(--dd-warning); }
+.dd-stat-card--success::before { background: var(--dd-success); }
+.dd-stat-card--danger::before { background: var(--dd-danger); }
+
+.dd-stat-card:hover {
+  border-color: var(--dd-border-strong);
+  transform: translateY(-1px);
+}
+
+.dd-stat-card--active {
+  border-color: var(--dd-primary);
+  background: var(--dd-primary-soft);
+}
+
+.dd-stat-card__icon {
+  margin-bottom: 8px;
+}
+
+.dd-stat-card--primary .dd-stat-card__icon { color: var(--dd-primary); }
+.dd-stat-card--warning .dd-stat-card__icon { color: var(--dd-warning); }
+.dd-stat-card--success .dd-stat-card__icon { color: var(--dd-success); }
+.dd-stat-card--danger .dd-stat-card__icon { color: var(--dd-danger); }
+
+.dd-stat-card__value {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--dd-text);
+}
+
+.dd-stat-card__label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--dd-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 8px;
+}

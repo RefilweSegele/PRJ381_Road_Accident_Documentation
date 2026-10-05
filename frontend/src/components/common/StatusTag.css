@@ -1,0 +1,46 @@
+.dd-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.dd-badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.dd-badge--neutral { background: var(--dd-neutral-soft); color: var(--dd-text-muted); }
+.dd-badge--neutral .dd-badge__dot { background: var(--dd-text-muted); }
+
+.dd-badge--info { background: var(--dd-info-soft); color: var(--dd-info); }
+.dd-badge--info .dd-badge__dot { background: var(--dd-info); }
+
+.dd-badge--warning { background: var(--dd-warning-soft); color: var(--dd-warning); }
+.dd-badge--warning .dd-badge__dot { background: var(--dd-warning); animation: dd-pulse 1.5s infinite; }
+
+.dd-badge--success { background: var(--dd-success-soft); color: var(--dd-success); }
+.dd-badge--success .dd-badge__dot { background: var(--dd-success); }
+
+.dd-badge--violet { background: var(--dd-violet-soft); color: var(--dd-violet); }
+.dd-badge--violet .dd-badge__dot { background: var(--dd-violet); }
+
+.dd-badge--danger { background: var(--dd-danger-soft); color: var(--dd-danger); }
+.dd-badge--danger .dd-badge__dot { background: var(--dd-danger); }
+
+@keyframes dd-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dd-badge--warning .dd-badge__dot {
+    animation: none;
+  }
+}
