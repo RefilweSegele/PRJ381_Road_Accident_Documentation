@@ -4,6 +4,7 @@ require("dotenv").config();
 
 const caseRoutes = require("./src/routes/case.routes");
 const authRoutes = require("./src/routes/auth.routes");
+const reviewerRoutes = require("./src/routes/reviewer/routes");
 
 
 //Routes for Uploading and Listing Images for a Case
@@ -29,6 +30,8 @@ app.use("/static/uploads", express.static(uploadConfig.LOCAL_ROOT));
 
 // Case Intake API 
 app.use("/api/cases", caseRoutes);
+// Reviewer search and detail endpoints are grouped under /api/review.
+app.use("/api/review", reviewerRoutes);
 
 // Image Upload & Storage API (POST /api/cases/:id/upload/images, GET /api/cases/:id/images)
 app.use("/api/cases", imageRoutes);

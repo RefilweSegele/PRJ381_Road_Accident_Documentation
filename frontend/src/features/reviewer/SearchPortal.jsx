@@ -16,35 +16,21 @@ import { useNavigate } from "react-router-dom";
 import { unparse } from "papaparse";
 
 import apiClient from "../../api/client";
-import useAuth from "../auth/useAuth";
-import mockCases from "../../api/mocks/cases.json";
 
 // Destructure RangePicker from AntD's DatePicker for selecting start and end dates
 const { RangePicker } = DatePicker;
 
-// API Interaction
-/*
- -Fetches case data from the backend. 
-  -Falls back to mock data if the backend endpoint fails or isn't live yet.
- */
+// apiClient already includes the /api base path.
 async function fetchCases({ search, dateRange }) {
   // Format the parameters to send to the backend
   const params = {
-    status: "Complete",
     search: search || undefined,
-    // Safely extract and format dates to ISO strings if a range is selected
-    dateFrom: dateRange?.[0]?.toISOString(),
-    dateTo: dateRange?.[1]?.toISOString(),
+    dateFrom: dateRange?.[0]?.format("YYYY-MM-DD"),
+    dateTo: dateRange?.[1]?.format("YYYY-MM-DD"),
   };
-  
-  try {
-    // Attempt to hit the Node.js backend API
-    const { data } = await apiClient.get("/api/cases", { params });
-    return data;
-  } catch {
-    // If the API call fails (e.g., server offline), return the local JSON mock
-    return mockCases;
-  }
+
+  const { data } = await apiClient.get("/review/cases", { params });
+  return data;
 }
 // Dynamic Table Columns (Role-Based Access Control)
 /*
@@ -85,8 +71,9 @@ function buildColumns(role) {
 export default function SearchPortal() {
   const navigate = useNavigate();
   
-  // Extract role and auth status from the custom hook (Member 1's JWT logic)
-  const { role, isAuthenticated } = useAuth();
+  // Read the role and token keys written by the login page.
+  const role = localStorage.getItem("user_role");
+  const isAuthenticated = Boolean(localStorage.getItem("jwt_token"));
   // Fallback to "insurer" for demo purposes if the user isn't logged in yet
   const effectiveRole = role || "insurer"; 
 
@@ -168,7 +155,7 @@ export default function SearchPortal() {
       {/* Filter and Action Bar */}
       <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
         <Input
-          placeholder="Search case ID, claim number, location"
+          placeholder="Search case number or description"
           prefix={<SearchOutlined />}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -190,13 +177,13 @@ export default function SearchPortal() {
       {/* Main Data Table */}
       <Table
         loading={isLoading}
-        rowKey="caseId" // Tells AntD which property makes each row unique (prevents console warnings)
+        rowKey="id" // Uses the database ID while displaying the human-readable case number.
         dataSource={data?.cases ?? []}
         columns={columns}
         pagination={{ pageSize: 10 }}
         // Makes the entire row clickable, navigating to the specific Case Details page (Page 6)
         onRow={(record) => ({
-          onClick: () => navigate(`/review/cases/${record.caseId}`),
+          onClick: () => navigate(`/review/cases/${record.id}`),
           style: { cursor: "pointer" },
         })}
       />
