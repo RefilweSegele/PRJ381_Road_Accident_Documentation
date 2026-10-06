@@ -1,0 +1,746 @@
+﻿
+
+.flight-log {
+    --background: #0d1117;
+    --foreground: #e6edf3;
+    --card: #161b22;
+    --card-foreground: #e6edf3;
+    --primary: #22c55e;
+    --primary-foreground: #0d1117;
+    --secondary: #1c2333;
+    --secondary-foreground: #8b949e;
+    --muted: #21262d;
+    --muted-foreground: #6e7681;
+    --accent: #22c55e;
+    --accent-foreground: #0d1117;
+    --border: #30363d;
+    --ring: #22c55e;
+    --radius: 6px;
+}
+
+    .flight-log button, .flight-log input, .flight-log select, .flight-log textarea {
+        font: inherit;
+    }
+
+    .flight-log .mono {
+        font-family: 'DM Mono', monospace;
+    }
+
+.flight-log {
+    padding: 24px;
+    background: var(--background);
+    color: var(--foreground);
+}
+
+@media (min-width: 768px) {
+    .flight-log {
+        padding: 40px;
+    }
+}
+
+.flight-log .container {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.flight-log .topbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.flight-log .brand-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+.flight-log .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--muted-foreground);
+    opacity: 0.5;
+}
+
+.flight-log .brand-meta .muted {
+    color: var(--muted-foreground);
+    letter-spacing: 0.12em;
+}
+
+.flight-log .title {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.flight-log .subtitle {
+    margin: 6px 0 0;
+    font-size: 0.9rem;
+    color: var(--muted-foreground);
+}
+
+.flight-log .header-actions {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.flight-log .theme-toggle {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--muted);
+    color: var(--foreground);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+
+    .flight-log .theme-toggle:hover {
+        border-color: var(--primary);
+    }
+
+    .flight-log .theme-toggle svg {
+        width: 16px;
+        height: 16px;
+    }
+
+.flight-log .date-block {
+    text-align: right;
+    font-size: 12px;
+}
+
+    .flight-log .date-block .date-label {
+        color: var(--muted-foreground);
+    }
+
+    .flight-log .date-block .badge {
+        margin-top: 6px;
+        color: rgba(34, 197, 94, 0.8);
+    }
+
+.flight-log .wizard-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 24px;
+}
+
+.flight-log .step-indicator {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    margin-bottom: 36px;
+}
+
+.flight-log .step-node {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+    .flight-log .step-node:last-child {
+        flex: none;
+    }
+
+.flight-log .step-node-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.flight-log .step-bullet {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    transition: all 0.2s ease;
+}
+
+    .flight-log .step-bullet.active {
+        background: #0d1117;
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    .flight-log .step-bullet.done {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: #0d1117;
+    }
+
+    .flight-log .step-bullet.inactive {
+        background: var(--muted);
+        border-color: var(--border);
+        color: var(--muted-foreground);
+    }
+
+.flight-log .step-label {
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+    .flight-log .step-label.active {
+        color: var(--primary);
+    }
+
+    .flight-log .step-label.done {
+        color: #d2dbe5;
+    }
+
+    .flight-log .step-label.inactive {
+        color: var(--muted-foreground);
+    }
+
+.flight-log .step-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+    margin: 0 12px 18px;
+}
+
+    .flight-log .step-line.done {
+        background: var(--primary);
+    }
+
+.flight-log .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 24px;
+}
+
+@media (min-width: 768px) {
+    .flight-log .form-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+.flight-log .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    grid-column: 1 / -1;
+    margin-top: 8px;
+}
+
+    .flight-log .section-header span {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--primary);
+        text-transform: uppercase;
+        letter-spacing: 0.25em;
+    }
+
+.flight-log .section-divider {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+.flight-log .field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+    .flight-log .field label {
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--muted-foreground);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+    }
+
+        .flight-log .field label .req {
+            color: var(--primary);
+            margin-left: 4px;
+        }
+
+.flight-log .input, .flight-log .select, .flight-log .textarea {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--muted);
+    color: var(--foreground);
+    padding: 10px 12px;
+    font-size: 13px;
+    outline: none;
+    direction: rtl;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+    .flight-log .input::placeholder, .flight-log .textarea::placeholder {
+        opacity: 0.5;
+    }
+
+    .flight-log .input:focus, .flight-log .select:focus, .flight-log .textarea:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.3);
+    }
+
+    .flight-log .input.error, .flight-log .select.error, .flight-log .textarea.error {
+        border-color: rgba(239, 68, 68, 0.75);
+    }
+
+.flight-log .field-error {
+    font-size: 11px;
+    color: #fca5a5;
+}
+
+.flight-log .field-hint {
+    font-size: 11px;
+    color: var(--muted-foreground);
+}
+
+.flight-log .textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.flight-log .col-span-full {
+    grid-column: 1 / -1;
+}
+
+.flight-log .progress-block {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.flight-log .progress-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--muted-foreground);
+    font-size: 12px;
+}
+
+.flight-log .progress-bar {
+    width: 100%;
+    height: 8px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: var(--muted);
+}
+
+.flight-log .progress-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: var(--primary);
+    transition: width 0.35s ease;
+}
+
+.flight-log .checklist-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.flight-log .warning-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    background: rgba(127, 29, 29, 0.2);
+    padding: 12px 14px;
+}
+
+    .flight-log .warning-banner .icon {
+        font-size: 18px;
+        line-height: 1;
+    }
+
+    .flight-log .warning-banner p {
+        margin: 0;
+    }
+
+    .flight-log .warning-banner .title {
+        font-size: 11px;
+        font-weight: 700;
+        color: #fca5a5;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+    }
+
+    .flight-log .warning-banner .desc {
+        margin-top: 4px;
+        color: var(--muted-foreground);
+        font-size: 12px;
+    }
+
+.flight-log .category-block {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.flight-log .category-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 2px;
+}
+
+    .flight-log .category-header .label {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--primary);
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+    }
+
+.flight-log .category-divider {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+.flight-log .category-total {
+    font-size: 11px;
+    color: var(--muted-foreground);
+}
+
+.flight-log .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: transparent;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+    .flight-log .check-item:hover {
+        border-color: rgba(34, 197, 94, 0.5);
+    }
+
+    .flight-log .check-item.checked {
+        background: rgba(33, 38, 45, 0.8);
+        opacity: 0.75;
+    }
+
+    .flight-log .check-item.critical-pending {
+        background: rgba(239, 68, 68, 0.04);
+        border-color: rgba(239, 68, 68, 0.25);
+    }
+
+.flight-log .checkmark-box {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.flight-log .check-item.checked .checkmark-box {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.flight-log .check-item.critical-pending .checkmark-box {
+    border-color: rgba(239, 68, 68, 0.7);
+}
+
+.flight-log .checkmark-box svg {
+    width: 10px;
+    height: 10px;
+    color: #0d1117;
+}
+
+.flight-log .check-item-text {
+    flex: 1;
+    font-size: 13px;
+    color: var(--foreground);
+}
+
+.flight-log .check-item.checked .check-item-text {
+    text-decoration: line-through;
+    color: var(--muted-foreground);
+}
+
+.flight-log .check-badges {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.flight-log .badge-critical {
+    font-size: 10px;
+    color: #fca5a5;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+}
+
+.flight-log .badge-done {
+    font-size: 13px;
+    color: var(--primary);
+}
+
+.flight-log .review-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.flight-log .status-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-radius: 12px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+}
+
+    .flight-log .status-banner.blocked {
+        background: rgba(127, 29, 29, 0.2);
+        border-color: rgba(239, 68, 68, 0.35);
+    }
+
+    .flight-log .status-banner.warning {
+        background: rgba(21, 128, 61, 0.14);
+        border-color: rgba(34, 197, 94, 0.35);
+    }
+
+    .flight-log .status-banner.success {
+        background: rgba(21, 128, 61, 0.12);
+        border-color: rgba(34, 197, 94, 0.35);
+    }
+
+    .flight-log .status-banner .emoji {
+        font-size: 22px;
+    }
+
+    .flight-log .status-banner .title {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .flight-log .status-banner .content {
+        margin: 2px 0 0;
+        font-size: 12px;
+        color: var(--muted-foreground);
+    }
+
+.flight-log .review-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+
+@media (min-width: 768px) {
+    .flight-log .review-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.flight-log .review-section {
+    background: var(--secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 16px;
+}
+
+.flight-log .review-section-header {
+    margin: 0 0 12px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--primary);
+    text-transform: uppercase;
+}
+
+.flight-log .review-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+    .flight-log .review-row:last-child {
+        border-bottom: none;
+    }
+
+    .flight-log .review-row .label {
+        font-size: 10px;
+        color: var(--muted-foreground);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .flight-log .review-row .value {
+        font-size: 12px;
+        color: var(--foreground);
+        text-align: right;
+        word-break: break-word;
+    }
+
+        .flight-log .review-row .value.highlight {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+.flight-log .success-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+    padding: 32px 0;
+    text-align: center;
+}
+
+.flight-log .success-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(34, 197, 94, 0.35);
+    font-size: 38px;
+}
+
+.flight-log .success-wrap h2 {
+    margin: 0;
+    color: var(--primary);
+    font-size: 2rem;
+}
+
+.flight-log .success-wrap p {
+    margin: 8px 0 0;
+    color: var(--muted-foreground);
+    max-width: 520px;
+}
+
+.flight-log .receipt-box {
+    width: min(100%, 620px);
+    background: var(--secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    text-align: left;
+}
+
+    .flight-log .receipt-box .receipt-title {
+        margin: 0 0 12px;
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--muted-foreground);
+    }
+
+.flight-log .nav-buttons {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 26px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+}
+
+.flight-log .btn {
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--foreground);
+    border-radius: 8px;
+    padding: 10px 18px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s ease;
+}
+
+    .flight-log .btn:hover:not(:disabled) {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    .flight-log .btn:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+    }
+
+.flight-log .btn-primary {
+    border-color: transparent;
+    background: var(--primary);
+    color: #0d1117;
+    font-weight: 700;
+}
+
+    .flight-log .btn-primary:hover:not(:disabled) {
+        background: #4ade80;
+        color: #0d1117;
+    }
+
+.flight-log .btn-secondary {
+    background: var(--muted);
+}
+
+.flight-log .muted-note {
+    color: #fca5a5;
+    font-size: 11px;
+}
+
+.flight-log.light-mode {
+    --background: #f4f6f8;
+    --foreground: #0f172a;
+    --card: #ffffff;
+    --card-foreground: #0f172a;
+    --primary: #16a34a;
+    --primary-foreground: #ffffff;
+    --secondary: #e9eef4;
+    --secondary-foreground: #475569;
+    --muted: #e2e8f0;
+    --muted-foreground: #64748b;
+    --accent: #16a34a;
+    --accent-foreground: #ffffff;
+    --border: #cbd5e1;
+    --ring: #16a34a;
+}
+
+.flight-log {
+    border-radius: var(--radius);
+    margin-top: 24px;
+}
+
+    .flight-log * {
+        box-sizing: border-box;
+    }
+
+.flight-log {
+    font-family: 'Outfit', sans-serif;
+}
