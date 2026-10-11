@@ -138,7 +138,7 @@ export default function SearchPortal() {
       {/* Warning banner shown if JWT logic is bypassed/missing */}
       {!isAuthenticated && (
         <p style={{ color: "#a66", fontSize: 13 }}>
-          No JWT found — showing demo data as an "insurer" role. Log in via Page 0 to see the real
+          No JWT found - showing demo data as an "insurer" role. Log in via Page 0 to see the real
           role-driven columns.
         </p>
       )}
