@@ -48,7 +48,7 @@ export default function ProcessingStatus() {
         const response = await fetch(`/api/cases/${id}/status`);
         const data = await response.json();
  
-        setJobState({ ...EMPTY_JOB, ...data });
+        setJobState({ ...EMPTY_JOB, ...data, logs: data.logs || [] });
  
         // Job is done (or broken), no need to keep asking
         if (data.status === 'COMPLETED' || data.status === 'FAILED') {

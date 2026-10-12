@@ -3,7 +3,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import ProcessingStatus from '../features/investigator/ProcessingStatus';
 
 export const router = createBrowserRouter([
-  // Redirect root URL directly to Member 6's page for Case #101
+  // Redirect root URL directly to Member 6's page
   {
     path: '/',
     element: <Navigate to="/investigator/cases/101/status" replace />,
