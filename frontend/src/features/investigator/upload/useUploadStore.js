@@ -1,14 +1,13 @@
-import {create} from 'zustand';
+import { create } from 'zustand';
 
-export const useUploadStore = create((set) => ({
+export const useUploadStore = create((set, get) => ({
     images: [],
     gcpData: [],
+    flightLog: null,
 
-    setimages: (newImages) => set({images: newImages}),
-    setGcpData: (data) => set({gcpData: data}),
+    setImages: (newImages) => set({ images: newImages }),   // was "setimages"
+    setGcpData: (data) => set({ gcpData: data }),
+    setFlightLog: (log) => set({ flightLog: log }),         // was missing
 
-    // Validation: Flags if there are fewer that 7 GCPs
-    isValidGcpCount: () => {
-        return get().gcpData.length >= 7;
-    }
+    isValidGcpCount: () => get().gcpData.length >= 7,       // "get" was undefined
 }));

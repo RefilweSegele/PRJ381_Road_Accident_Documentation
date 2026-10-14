@@ -21,10 +21,10 @@ module.exports = {
     TEMP_DIR: process.env.UPLOAD_TEMP_DIR || path.join(BACKEND_ROOT, 'tmp', 'uploads'),
 
     LOCAL_ROOT: process.env.UPLOAD_LOCAL_ROOT || path.join(BACKEND_ROOT, "uploads"),    
-    PUNLIC_BASE_URL: 
-        process.env.UPLOAD_PUBLIC_BASE_URL || 
-        'http://localhost:${process.env.PORT || 5000}/static/uploads',
-
+    // backend/src/config/upload.js
+    PUBLIC_BASE_URL:
+    process.env.UPLOAD_PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 5000}/static/uploads`,
+    
     // Only read when STORAGE_DRIVER=s3
     S3: {
             BUCKET: process.env.S3_BUCKET || "",

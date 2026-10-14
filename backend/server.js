@@ -10,8 +10,7 @@ const reviewerRoutes = require("./src/routes/reviewer/routes");
 //Routes for Uploading and Listing Images for a Case
 const imageRoutes = require("./src/routes/Image.routes");
 const uploadConfig = require("./src/config/upload");
-const { uploadErrorHandler } = require("./src/middleware/uploadErrorHandler");
-
+const { uploadErrorHandler } = require("./src/middleware/errorHandler");
 
 const app = express();
 

@@ -8,8 +8,7 @@ import './GcpTableInput.css';
 const { Title } = Typography;
 
 export default function GcpTableInput() {
-    const { gcpData, setGcpData, iValidGcpCount } = useUploadStore();
-
+    const { gcpData, setGcpData, isValidGcpCount } = useUploadStore();
     const handleFileUpload = (file) => {
         Papa.parse(file, {
             header: true,

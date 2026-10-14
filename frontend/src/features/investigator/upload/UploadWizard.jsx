@@ -10,7 +10,6 @@ export default function UploadWizard() {
         <h1 className="wizard-title">Case Data Upload</h1>
         <ImageDropzone />
             <GcpTableInput />
-            <GcpTableInput />
             <FlightLogForm />
       </div>
     );
