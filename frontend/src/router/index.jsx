@@ -1,37 +1,20 @@
-import React from 'react';
-import { createBrowserRouter, Navigate } from 'react-router-dom';
-import ProcessingStatus from '../features/investigator/ProcessingStatus';
+import { Routes, Route, Navigate } from "react-router-dom";
+import CaseDetailPage from ".../CaseDetailPage";
+import SearchPortal from ".../SearchPortal";
+import UploadWizard from ".../UploadWizard";
+import LoginPage from ".../LoginPage";
+import ProcessingStatus from ".../ProcessingStatus";
 
-export const router = createBrowserRouter([
-  // Redirect root URL directly to Member 6's page
-  {
-    path: '/',
-    element: <Navigate to="/investigator/cases/101/status" replace />,
-  },
-
-  // Member 6 Route: Processing Status Monitor
-  {
-    path: '/investigator/cases/:id/status',
-    element: <ProcessingStatus />,
-  },
-
-  // Simple placeholder for when "View 3D Model" button is clicked
-  {
-    path: '/review/cases/:id',
-    element: (
-      <div style={{ padding: '40px', textAlign: 'center', fontFamily: 'sans-serif' }}>
-        <h2>3D Viewer Placeholder (Member 8)</h2>
-        <p>This is where the React Three Fiber viewer will display once integrated.</p>
-        <a href="/investigator/cases/101/status">← Back to Status Monitor</a>
-      </div>
-    ),
-  },
-
-  // Catch-all route to prevent blank screens on invalid URLs
-  {
-    path: '*',
-    element: <Navigate to="/investigator/cases/101/status" replace />,
-  },
-]);
-
-export default router;
+export default function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/" element={<UploadWizard />} />
+      <Route path="/cases/:id/upload" element={<UploadWizard />} />
+      <Route path="/cases/:id/status" element={<ProcessingStatus />} />
+      <Route path="/review/cases" element={<SearchPortal />} />
+      <Route path="/review/cases/:id" element={<CaseDetailPage />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
