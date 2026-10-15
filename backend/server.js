@@ -1,11 +1,13 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
+const path = require("path");
+const fs = require("fs");
+const jwt = require("jsonwebtoken");
 
 const caseRoutes = require("./src/routes/case.routes");
 const authRoutes = require("./src/routes/auth.routes");
 const reviewerRoutes = require("./src/routes/reviewer/routes");
-
 
 //Routes for Uploading and Listing Images for a Case
 const imageRoutes = require("./src/routes/Image.routes");
@@ -17,8 +19,8 @@ const flightLogRoutes = require("./src/routes/flightLog.routes");
 const { profile: droneProfile } = require("./src/controllers/flightLogController");
 const { uploadErrorHandler } = require("./src/middleware/errorHandler");
 
-
 const app = express();
+const JWT_SECRET = process.env.JWT_SECRET || 'daias_super_secret_key';
 
 // Middleware
 app.use(cors());
@@ -29,12 +31,38 @@ app.get("/", (req, res) => {
   res.send("API is running...");
 });
 
-// Serves files stored by the local-disk storage driver so the image URLs
-// returned by the upload endpoint resolve in dev. Not needed with STORAGE_DRIVER=s3.
-app.use("/static/uploads", express.static(uploadConfig.LOCAL_ROOT));
+// Secure File Streaming Endpoint (Replaces public express.static)
+// Frontend <img> tags can request files like: /api/uploads/filename.jpg?token=JWT
+app.get("/api/uploads/:filename", (req, res) => {
+  const token = req.query.token || (req.headers["authorization"] && req.headers["authorization"].split(" ")[1]);
 
-// Case Intake API 
+  if (!token) {
+    return res.status(401).json({ error: "Access token missing" });
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ error: "Invalid or expired token" });
+    }
+
+    const filename = req.params.filename;
+    const safeFilename = path.basename(filename); // Prevent directory traversal attacks
+    const filePath = path.join(uploadConfig.LOCAL_ROOT || path.join(__dirname, "uploads"), safeFilename);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    res.sendFile(filePath);
+  });
+});
+
+// Authentication Routes
+app.use("/api/auth", authRoutes.router);
+
+// Case Intake API
 app.use("/api/cases", caseRoutes);
+
 // Reviewer search and detail endpoints are grouped under /api/review.
 app.use("/api/review", reviewerRoutes);
 
