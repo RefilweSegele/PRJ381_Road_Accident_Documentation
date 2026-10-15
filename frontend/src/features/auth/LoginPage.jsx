@@ -6,6 +6,13 @@ import axios from 'axios';
 
 const { Title, Text } = Typography;
 
+const HOME_BY_ROLE = {
+  investigator: "/investigator/cases",
+  insurer: "/review/cases",
+  law_enforcement: "/review/cases",
+  admin: "/admin/users",
+};
+
 export const setupAxiosInterceptors = () => {
   axios.interceptors.request.use(
     (config) => {
@@ -43,15 +50,9 @@ export const LoginPage = () => {
       setupAxiosInterceptors();
 
       message.success('Authentication successful!');
-
   
-      if (mockResponse.role === 'admin') {
-        navigate('/admin/users');
-      } else if (mockResponse.role === 'insurer' || mockResponse.role === 'law_enforcement') {
-        navigate('/review/cases');
-      } else {
-        navigate('/investigator/cases');
-      }
+      navigate(HOME_BY_ROLE[mockResponse.role] || "/investigator/cases");
+
     } catch (error) {
       message.error('Invalid email or password.');
     } finally {

@@ -7,7 +7,7 @@ import './GcpTableInput.css';
 
 const { Title } = Typography;
 
-export default function GcpTableInput() {
+export default function GcpTableInput({ caseId }) {
     const { gcpData, setGcpData, isValidGcpCount } = useUploadStore();
     const handleFileUpload = (file) => {
         Papa.parse(file, {
@@ -29,7 +29,7 @@ export default function GcpTableInput() {
 
     return (
         <Card className="gcp-card">
-        <Title level={4}>Step B: Ground Control Points (GCPs)</Title>
+        <Title level={4}>Step B: Ground Control Points (GCPs) — Case {caseId}</Title>
         
         <Upload beforeUpload={handleFileUpload} accept=".csv,.txt" showUploadList={false}>
             <Button icon={<UploadOutlined />}>Import GCPs (CSV)</Button>
