@@ -3,11 +3,12 @@ import { create } from 'zustand';
 export const useUploadStore = create((set, get) => ({
     images: [],
     gcpData: [],
-    flightLog: null,
+    flightLog: null, // set when the Flight Log form is submitted
 
-    setImages: (newImages) => set({ images: newImages }),   // was "setimages"
+    setImages: (newImages) => set({ images: newImages }),
     setGcpData: (data) => set({ gcpData: data }),
-    setFlightLog: (log) => set({ flightLog: log }),         // was missing
+    setFlightLog: (data) => set({ flightLog: data }),
 
-    isValidGcpCount: () => get().gcpData.length >= 7,       // "get" was undefined
+    // Validation: flags if there are fewer than 7 GCPs
+    isValidGcpCount: () => get().gcpData.length >= 7,
 }));
