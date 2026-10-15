@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useUploadStore } from './useUploadStore';
+import { saveFlightLog } from '../../../api/flightLog';
 import './FlightLogForm.css';
 
 const steps = ['Flight Notes', 'Pre-flight Checklist', 'Review & Submit'];
@@ -17,8 +18,8 @@ const initialChecklist = [
     { id: 'eq2', category: 'Equipment', label: 'All propellers seated and torqued correctly', critical: true, checked: false },
     { id: 'eq3', category: 'Equipment', label: 'Battery charge ≥ 80% on all flight packs', critical: true, checked: false },
     { id: 'eq4', category: 'Equipment', label: 'Camera lens cleaned and gimbal locks removed', critical: false, checked: false },
-    { id: 'eq5', category: 'Equipment', label: 'LiDAR sensor calibrated (if applicable)', critical: false, checked: false },
-    { id: 'eq6', category: 'Equipment', label: 'SD card formatted and capacity confirmed', critical: false, checked: false },
+    { id: 'eq5', category: 'Equipment', label: 'Downward vision sensors clean and unobstructed', critical: false, checked: false },
+    { id: 'eq6', category: 'Equipment', label: 'Internal storage (22 GB, no SD slot) has free space — earlier footage offloaded', critical: false, checked: false },
     { id: 'eq7', category: 'Equipment', label: 'GPS module locked — satellites ≥ 10', critical: true, checked: false },
     { id: 'sf1', category: 'Safety', label: 'Flight zone perimeter secured and marked', critical: true, checked: false },
     { id: 'sf2', category: 'Safety', label: 'Emergency contact and incident plan briefed', critical: true, checked: false },
@@ -31,7 +32,7 @@ const initialChecklist = [
     { id: 'rg3', category: 'Regulatory', label: 'Law enforcement / site authority notified', critical: true, checked: false },
     { id: 'rg4', category: 'Regulatory', label: 'Insurance certificate available on-site', critical: false, checked: false },
     { id: 'rg5', category: 'Regulatory', label: 'Flight log book prepared and ready to sign', critical: false, checked: false },
-    { id: 'ms1', category: 'Mission', label: 'Flight plan loaded and verified in GCS', critical: true, checked: false },
+    { id: 'ms1', category: 'Mission', label: 'Survey area and flight path planned (Neo has no waypoint missions)', critical: false, checked: false },
     { id: 'ms2', category: 'Mission', label: 'GCP markers placed and coordinates recorded', critical: false, checked: false },
     { id: 'ms3', category: 'Mission', label: 'Data upload destination confirmed (cloud / local)', critical: false, checked: false },
     { id: 'ms4', category: 'Mission', label: 'Photogrammetry software parameters set', critical: false, checked: false },
@@ -58,6 +59,7 @@ function getDefaultNotes() {
         visibility: '',
         temperature: '',
         missionType: 'accident-scene',
+        propGuards: false,
         notes: '',
     };
 }
@@ -86,7 +88,7 @@ function validateNotes(notes) {
     return errors;
 }
 
-export default function FlightLogForm({ onSubmitted }) {
+export default function FlightLogForm({ onSubmitted, caseId }) {
     const setFlightLog = useUploadStore((s) => s.setFlightLog);
     const [state, setState] = useState(() => ({
         step: 0,
@@ -94,6 +96,9 @@ export default function FlightLogForm({ onSubmitted }) {
         checklist: initialChecklist.map((item) => ({ ...item })),
         errors: {},
         submitted: false,
+        saving: false,
+        submitError: '',
+        saveWarnings: [],
         isDark: false,
     }));
 
@@ -126,18 +131,47 @@ export default function FlightLogForm({ onSubmitted }) {
         }));
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         const criticalOpen = state.checklist.filter((item) => item.critical && !item.checked).length;
-        if (criticalOpen > 0) return;
+        if (criticalOpen > 0 || state.saving) return;
 
         const payload = {
             ...state.notes,
             checklist: state.checklist.map(({ id, checked }) => ({ id, checked })),
             submittedAt: new Date().toISOString(),
         };
-        setFlightLog(payload);
-        if (onSubmitted) onSubmitted(payload);
-        setState((prev) => ({ ...prev, submitted: true }));
+
+        // No case yet (standalone wizard): keep the old behaviour and hold the log in the store.
+        if (!caseId) {
+            setFlightLog(payload);
+            if (onSubmitted) onSubmitted(payload);
+            setState((prev) => ({ ...prev, submitted: true }));
+            return;
+        }
+
+        setState((prev) => ({ ...prev, saving: true, submitError: '' }));
+        try {
+            const { warnings } = await saveFlightLog(caseId, payload);
+            setFlightLog(payload);
+            if (onSubmitted) onSubmitted(payload);
+            setState((prev) => ({ ...prev, saving: false, submitted: true, saveWarnings: warnings || [] }));
+        } catch (err) {
+            const data = err.response?.data;
+            if (data?.code === 'FLIGHT_LOG_INVALID') {
+                // Server field names match the form inputs, so show them where they belong.
+                const errors = {};
+                for (const e of data.details.errors) errors[e.field] = e.message;
+                setState((prev) => ({
+                    ...prev, saving: false, step: 0, errors,
+                    submitError: 'The server rejected this log — see the highlighted fields.',
+                }));
+            } else {
+                setState((prev) => ({
+                    ...prev, saving: false,
+                    submitError: data?.error || 'Could not save the flight log. Please try again.',
+                }));
+            }
+        }
     };
 
     const resetMission = () => {
@@ -148,6 +182,8 @@ export default function FlightLogForm({ onSubmitted }) {
             notes: getDefaultNotes(),
             checklist: initialChecklist.map((item) => ({ ...item, checked: false })),
             errors: {},
+            submitError: '',
+            saveWarnings: [],
         }));
     };
 
@@ -257,6 +293,9 @@ export default function FlightLogForm({ onSubmitted }) {
             {renderField('Battery Packs', true, state.errors.batteryCount || '', '', (
                 <input type="number" className={`input ${state.errors.batteryCount ? 'error' : ''}`} value={state.notes.batteryCount} placeholder="3" onChange={(e) => updateField('batteryCount', e.target.value)} />
             ))}
+            {renderField('Propeller guards fitted', false, '', 'Rated flight time drops from 18 to 17 min', (
+                <input type="checkbox" checked={state.notes.propGuards === true} onChange={(e) => updateField('propGuards', e.target.checked)} />
+            ))}
             {renderField('Est. Duration (min)', true, state.errors.estimatedDuration || '', '', (
                 <input type="number" className={`input ${state.errors.estimatedDuration ? 'error' : ''}`} value={state.notes.estimatedDuration} placeholder="45" onChange={(e) => updateField('estimatedDuration', e.target.value)} />
             ))}
@@ -280,7 +319,7 @@ export default function FlightLogForm({ onSubmitted }) {
             {renderField('Visibility (km)', true, state.errors.visibility || '', '', (
                 <input type="number" className={`input ${state.errors.visibility ? 'error' : ''}`} value={state.notes.visibility} placeholder="10" onChange={(e) => updateField('visibility', e.target.value)} />
             ))}
-            {renderField('Temperature (°C)', false, '', '', (
+            {renderField('Temperature (°C)', false, state.errors.temperature || '', 'DJI Neo operating range: −10 to 40 °C', (
                 <input type="number" className="input" value={state.notes.temperature} placeholder="22" onChange={(e) => updateField('temperature', e.target.value)} />
             ))}
 
@@ -473,6 +512,15 @@ export default function FlightLogForm({ onSubmitted }) {
                     {renderReviewRow('Status', 'PENDING DISPATCH APPROVAL')}
                 </div>
 
+                {state.saveWarnings.length > 0 ? (
+                    <div className="receipt-box">
+                        <p className="receipt-title mono">Saved with {state.saveWarnings.length} warning{state.saveWarnings.length !== 1 ? 's' : ''}</p>
+                        {state.saveWarnings.map((w, i) => (
+                            <p className="desc mono" key={`${w.field}-${w.code}-${i}`}>{w.message}</p>
+                        ))}
+                    </div>
+                ) : null}
+
                 <button className="btn btn-secondary" onClick={resetMission}>Log New Mission</button>
             </div>
         );
@@ -527,6 +575,7 @@ export default function FlightLogForm({ onSubmitted }) {
                                 <button className="btn" onClick={() => setState((prev) => ({ ...prev, step: Math.max(prev.step - 1, 0) }))} disabled={state.step === 0}>← Back</button>
 
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    {state.submitError ? <span className="muted-note mono" role="alert">{state.submitError}</span> : null}
                                     {state.step === 0 && Object.keys(state.errors).length > 0 ? (
                                         <span className="muted-note mono">{Object.keys(state.errors).length} field{Object.keys(state.errors).length !== 1 ? 's' : ''} need attention</span>
                                     ) : null}
@@ -534,7 +583,7 @@ export default function FlightLogForm({ onSubmitted }) {
                                     {state.step < steps.length - 1 ? (
                                         <button className="btn btn-primary" onClick={handleContinue}>Continue →</button>
                                     ) : (
-                                        <button className="btn btn-primary" onClick={handleSubmit} disabled={criticalPending.length > 0}>Submit Mission Log</button>
+                                        <button className="btn btn-primary" onClick={handleSubmit} disabled={criticalPending.length > 0 || state.saving}>{state.saving ? 'Saving…' : 'Submit Mission Log'}</button>
                                     )}
                                 </div>
                             </div>

@@ -10,7 +10,13 @@ const reviewerRoutes = require("./src/routes/reviewer/routes");
 //Routes for Uploading and Listing Images for a Case
 const imageRoutes = require("./src/routes/Image.routes");
 const uploadConfig = require("./src/config/upload");
+
+// Member 5: GCP import + flight notes
+const gcpRoutes = require("./src/routes/gcp.routes");
+const flightLogRoutes = require("./src/routes/flightLog.routes");
+const { profile: droneProfile } = require("./src/controllers/flightLogController");
 const { uploadErrorHandler } = require("./src/middleware/errorHandler");
+
 
 const app = express();
 
@@ -34,6 +40,15 @@ app.use("/api/review", reviewerRoutes);
 
 // Image Upload & Storage API (POST /api/cases/:id/upload/images, GET /api/cases/:id/images)
 app.use("/api/cases", imageRoutes);
+
+// GCP import (POST /api/cases/:id/gcps/import, POST|GET|DELETE /api/cases/:id/gcps)
+app.use("/api/cases", gcpRoutes);
+
+// Flight notes (POST|GET /api/cases/:id/flight-logs, GET|PUT|DELETE .../:logId)
+app.use("/api/cases", flightLogRoutes);
+
+// Neo hardware limits the validators enforce (read-only, for the frontend form)
+app.get("/api/drone-profile", droneProfile);
 
 // Upload errors (multer limits, bad file type, case not found) -> proper
 // 400/404/413/415. Must stay BEFORE the generic handler below; it passes
