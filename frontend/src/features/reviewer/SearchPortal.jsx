@@ -1,5 +1,5 @@
 /*
- -Page 5 — Reviewer Case Search Portal
+ -Page 5 - Reviewer Case Search Portal
  -Route: /review/cases
 */
 

@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const caseController = require("../../controllers/caseController");
 const reviewerController = require("../../controllers/reviewerController");
 
 /*
@@ -7,7 +8,7 @@ const reviewerController = require("../../controllers/reviewerController");
 */ 
 
 // GET /api/review/cases — completed cases shown in SearchPortal.
-router.get("/cases", reviewerController.searchCases);
+router.get("/cases", caseController.searchCases);
 // GET /api/review/cases/:id — reviewer-facing case detail.
 router.get("/cases/:id", reviewerController.getCaseForReview);
 
