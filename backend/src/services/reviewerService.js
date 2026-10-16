@@ -6,7 +6,7 @@ Reviewer-facing case detail - resuses caseService's base case shape and adds the
 */
 const REVIEWABLE_STATUSES = ["processed", "reviewed"];
 
-async function getReviewableCaseByID(id) {
+async function getReviewableCaseById(id) {
     const { rows } = await pool.query(
         `SELECT id, case_reference, incident_address, latitude, longitude, incident_date, status, assigned_investigator FROM cases WHERE id = $1`,
         [id]
@@ -82,5 +82,5 @@ async function searchCases({ search, dateFrom, dateTo }) {
 }
 
 module.exports = {
-    getReviewableCaseByID, searchCases,
+    getReviewableCaseById, searchCases,
 };
