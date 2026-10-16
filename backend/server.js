@@ -12,6 +12,10 @@ const imageRoutes = require("./src/routes/Image.routes");
 const uploadConfig = require("./src/config/upload");
 const { uploadErrorHandler } = require("./src/middleware/errorHandler");
 
+const reportRoutes = require("./src/routes/report.routes");
+const adminRoutes = require("./src/routes/admin.routes");
+
+
 const app = express();
 
 // Middleware
@@ -34,6 +38,9 @@ app.use("/api/review", reviewerRoutes);
 
 // Image Upload & Storage API (POST /api/cases/:id/upload/images, GET /api/cases/:id/images)
 app.use("/api/cases", imageRoutes);
+
+app.use("/api", reportRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Upload errors (multer limits, bad file type, case not found) -> proper
 // 400/404/413/415. Must stay BEFORE the generic handler below; it passes
