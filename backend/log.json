@@ -1,0 +1,67 @@
+{
+  "missionId": "M-1",
+  "date": "2026-10-14",
+  "time": "09:30",
+  "pilotName": "Test Pilot",
+  "location": "N1 off-ramp",
+  "gpsLat": -26.2041,
+  "gpsLon": 28.0473,
+  "altitudeAGL": 60,
+  "flightSpeed": 5,
+  "overlapFront": 80,
+  "overlapSide": 70,
+  "batteryCount": 3,
+  "estimatedDuration": 36,
+  "weatherCondition": "Clear",
+  "windSpeed": 10,
+  "visibility": 10,
+  "temperature": 22,
+  "missionType": "accident-scene",
+  "notes": "",
+  "checklist": [
+    {
+      "id": "eq1",
+      "checked": true
+    },
+    {
+      "id": "eq2",
+      "checked": true
+    },
+    {
+      "id": "eq3",
+      "checked": true
+    },
+    {
+      "id": "eq7",
+      "checked": true
+    },
+    {
+      "id": "sf1",
+      "checked": true
+    },
+    {
+      "id": "sf2",
+      "checked": true
+    },
+    {
+      "id": "sf5",
+      "checked": true
+    },
+    {
+      "id": "rg1",
+      "checked": true
+    },
+    {
+      "id": "rg2",
+      "checked": true
+    },
+    {
+      "id": "rg3",
+      "checked": true
+    },
+    {
+      "id": "ms5",
+      "checked": true
+    }
+  ]
+}

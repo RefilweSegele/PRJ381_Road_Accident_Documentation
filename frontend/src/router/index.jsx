@@ -9,6 +9,7 @@ export default function AppRoutes() {
         <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/" element={<UploadWizard />} />
+            <Route path="/cases/:id/upload" element={<UploadWizard />} />
             <Route path="/review/cases" element={<SearchPortal />} />
             <Route path="/review/cases/:id" element={<CaseDetailPage />} />
         </Routes>
