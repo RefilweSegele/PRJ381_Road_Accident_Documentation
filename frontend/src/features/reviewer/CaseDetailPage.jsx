@@ -2,42 +2,48 @@ import React, {useState} from "react";
 import {useParams} from "react-router-dom";
 import ThreeCanvas from "./Viewer3D/ThreeCanvas";
 import UIOverlays from "./Viewer3D/UIOverlays";
+import { useReviewCase } from "../../api/reviewer";
+
+function Message ({ children }) {
+    return <div style={{ padding : "40px", textAlign: "center" }}>{children}</div>;
+}
 
 export default function CaseDetailPage() {
     const {id} = useParams();
     const [measurementDistance, setMeasurementDistance] = useState(null);
+    const { data: caseData, isLoading, error } = useReviewCase(id);
 
-    const modelUrl = "/models/DamagedHelmet.glb";
+    if (isLoading) return <Message>Loading case...</Message>;
 
-    //Sample data shaped exactly like real rows from the 'detection' table until schema resolves and this comes from a real fetch.
-    const sampleDamageBoxes = [
-        {
-            damageType: "Frontal Bumper Crumple",
-            confidence: 0.9425,
-            boundingBox: {
-                unit: "meters",
-                x_min: -1.24, x_max: -0.85,
-                y_min: 0.45, y_max: 1.10,
-                z_min: 0.12, z_max: 0.68,
-            },
-        },
-        {
-            damageType: "Windshielf Structural Crack",
-            confidence: 0.8810,
-            boundingBox: {
-                unit: "meters",
-                x_min: -0.40, x_max: 0.35,
-                y_min: 1.20, y_max: 1.75,
-                z_min: 0.85, z_max: 1.30,
-            },
-        },
-    ];
+    if (error) {
+        if (error.status === 404) return <Message>Case {id} was not found</Message>;
+        if (error.status === 409) return <Message>{error.message}</Message>;
+        return <Message>Could not load the case. Please try again.</Message>
+    }
 
     return (
         <div style={{ position: "relative" }}>
-            <h1 style={{ margin: "12px"}}>Case {id} - 3D Viewer</h1>
-            <ThreeCanvas modelUrl={modelUrl} onMeasurementChange={setMeasurementDistance} /> 
-            <UIOverlays measurementDistance={measurementDistance} damageBoxes={sampleDamageBoxes} />
+            <h1 style={{ margin: "12px"}}>Case {caseData.caseReference} - 3D Viewer</h1>
+
+            {caseData.scaleFactor == null && (
+                <p style={{ margin: "0 12px", color: "var(--dd-text-muted)"}}>
+                    Measurements are unscaled until calibration data is available
+                </p>
+            )}
+
+            {caseData.modelUrl ? (
+                <ThreeCanvas
+                    modelUrl={caseData.modelUrl}
+                    onMeasurementChange={setMeasurementDistance}
+                />
+            ) : (
+                <Message>No 3D model is available for this case yet.</Message>
+            )}
+
+            <UIOverlays
+                measurementDistance={measurementDistance}
+                damageBoxes={caseData.damageBoxes}
+            />
         </div>
     );
 }
