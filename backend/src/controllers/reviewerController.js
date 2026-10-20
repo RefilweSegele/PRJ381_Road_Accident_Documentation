@@ -1,4 +1,4 @@
-const reviewerService = require("../services/reviewerService");
+const reviewerService = require("../services/reviewerService.searchCases");
 
 exports.searchCases = async (req, res) => {
     try {
