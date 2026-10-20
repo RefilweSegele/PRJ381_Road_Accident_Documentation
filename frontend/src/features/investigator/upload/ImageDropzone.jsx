@@ -7,7 +7,7 @@ import './ImageDropzone.css';
 
 const { Title, Text } = Typography;
 
-export default function ImageDropzone(){
+export default function ImageDropzone({ caseId }) {
     const { images, setImages } = useUploadStore();
 
     const onDrop = useCallback((acceptedFiles) => {
@@ -26,7 +26,7 @@ export default function ImageDropzone(){
 
     return (
         <Card className = "dropzone-card">
-            <Title level = {4}>Step A: Upload Aerial Imagery</Title>
+            <Title level={4}>Step A: Upload Aerial Imagery — Case {caseId}</Title>
 
             <div {...getRootProps()} className = {`dropzone-area ${isDragActive ? `active` : ''}`}>
                 <input {...getInputProps()} />

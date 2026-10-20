@@ -119,6 +119,18 @@ export default function GcpTableInput({ caseId }) {
                 columns={columns}
                 rowKey="id"
                 size="small"
+        <Title level={4}>Step B: Ground Control Points (GCPs) — Case {caseId}</Title>
+        
+        <Upload beforeUpload={handleFileUpload} accept=".csv,.txt" showUploadList={false}>
+            <Button icon={<UploadOutlined />}>Import GCPs (CSV)</Button>
+        </Upload>
+
+        {gcpData.length > 0 && !isValidGcpCount() && (
+            <Alert 
+            className="gcp-alert"
+            message={`${gcpData.length} GCPs recorded — 7 to 8 are recommended without RTK hardware.`} 
+            type="warning" 
+            showIcon 
             />
         </Card>
     );

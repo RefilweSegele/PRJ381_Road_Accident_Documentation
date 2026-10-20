@@ -164,3 +164,9 @@ export async function getMockCaseStats() {
 
   return { total, inProgress, processed, failed };
 }
+
+// Single-case lookup for the status page. Returns null for unknown ids.
+export async function getMockCaseById(id) {
+  await new Promise((resolve) => setTimeout(resolve, 250));
+  return MOCK_CASES.find((c) => c.id === id) ?? null;
+}
