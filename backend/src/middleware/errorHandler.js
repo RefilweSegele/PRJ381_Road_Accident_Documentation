@@ -8,10 +8,12 @@
 const multer = require("multer");
 
 class AppError extends Error {
-    constructor(message, statusCode, code) {
+    // `details` (optional) carries structured info, e.g. validation errors.
+    constructor(message, statusCode, code, details) {
         super(message);
         this.statusCode = statusCode;
         this.code = code; // machine-readable, e.g. CASE_NOT_FOUND
+        this.details = details;
     }
 }
 
@@ -31,7 +33,15 @@ function uploadErrorHandler(error, req, res, next) {
     }
     if (error instanceof AppError) {
         return res.status(error.statusCode)
-                  .json({error: error.message, code: error.code});
+                  .json({error: error.message, code: error.code,
+                         ...(error.details !== undefined && { details: error.details })});
+    }
+    // express.json() failures: bad JSON is the client's fault (400), not a 500.
+    if (error && error.type === "entity.parse.failed") {
+        return res.status(400).json({ error: "Request body is not valid JSON", code: "INVALID_JSON" });
+    }
+    if (error && error.type === "entity.too.large") {
+        return res.status(413).json({ error: "Request body is too large", code: "BODY_TOO_LARGE" });
     }
     return next(error); // not ours — fall through to the generic handler
 }

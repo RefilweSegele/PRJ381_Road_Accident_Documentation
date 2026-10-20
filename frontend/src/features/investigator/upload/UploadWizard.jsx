@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button, Space, Typography, message } from "antd";
@@ -14,8 +15,19 @@ import "./UploadWizard.css";
 const MAX_BATCH = 150;
 
 const { Text } = Typography;
+=======
+import React from 'react';
+import { useParams } from 'react-router-dom';
+import ImageDropzone from './ImageDropzone';
+import GcpTableInput from './GcpTableInput';
+import './UploadWizard.css';
+import FlightLogForm from './FlightLogForm';
+>>>>>>> origin/main
 
+// Served at "/" (no case: data stays in the browser) and "/cases/:id/upload"
+// (data is validated and saved to that case by the backend).
 export default function UploadWizard() {
+<<<<<<< HEAD
   const { id: caseId } = useParams();
   const navigate = useNavigate();
   const images = useUploadStore((s) => s.images);
@@ -81,3 +93,17 @@ export default function UploadWizard() {
     </div>
   );
 }
+=======
+    const { id } = useParams();
+    const caseId = id && /^[1-9]\d*$/.test(id) ? Number(id) : undefined;
+
+    return (
+      <div className="wizard-container">
+        <h1 className="wizard-title">Case Data Upload</h1>
+        <ImageDropzone />
+        <GcpTableInput caseId={caseId} />
+        <FlightLogForm caseId={caseId} />
+      </div>
+    );
+}
+>>>>>>> origin/main

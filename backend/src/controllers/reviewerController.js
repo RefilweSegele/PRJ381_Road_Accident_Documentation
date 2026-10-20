@@ -1,6 +1,4 @@
-const reviewerService = require("../services/caseService");
-// backend/src/controllers/reviewerController.js
-const reviewerSearchService = require("../services/reviewerService");
+const reviewerService = require("../services/reviewerService");
 
 exports.searchCases = async (req, res) => {
     try {
