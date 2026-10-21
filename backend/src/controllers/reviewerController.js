@@ -1,9 +1,10 @@
-const reviewerService = require("../services/reviewerService.searchCases");
+const reviewerService = require("../services/reviewerService");
 
 exports.searchCases = async (req, res) => {
     try {
         const { search, dateFrom, dateTo } = req.query;
-        const result = await reviewerSearchService.searchCases({ search, dateFrom, dateTo });
+        // Fixed: changed reviewerSearchService to reviewerService
+        const result = await reviewerService.searchCases({ search, dateFrom, dateTo });
         return res.status(200).json(result);
     } catch (err) {
         console.error("searchCases error:", err);
@@ -21,8 +22,9 @@ exports.getCaseForReview = async (req, res) => {
             return res.status(400).json({ error: "Case id must be a positive integer" });
         }
 
-        // The function is getReviewableCaseByID (capital ID) and lives in reviewerService.
-        const caseData = await reviewerSearchService.getReviewableCaseByID(id);
+        // Fixed: changed reviewerSearchService to reviewerService 
+        // Fixed: changed getReviewableCaseByID to getReviewableCaseById (lowercase d matches service)
+        const caseData = await reviewerService.getReviewableCaseById(id);
 
         if (!caseData) {
             return res.status(404).json({ error: "Case not found" });

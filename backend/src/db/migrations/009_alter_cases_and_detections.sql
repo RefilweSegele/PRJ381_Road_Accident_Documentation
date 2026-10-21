@@ -2,7 +2,6 @@
 -- (accidentType, description), plus the reviewer-side fields
 -- SearchPortal.jsx expects (claimNumber, insurerName, chargeReference)
 -- that currently come back null because no columns back them.
-
 ALTER TABLE cases
   ADD COLUMN IF NOT EXISTS accident_type TEXT
     CHECK (accident_type IN ('collision', 'single_vehicle', 'pedestrian', 'other')),
@@ -10,6 +9,10 @@ ALTER TABLE cases
   ADD COLUMN IF NOT EXISTS claim_number TEXT,
   ADD COLUMN IF NOT EXISTS insurer_name TEXT,
   ADD COLUMN IF NOT EXISTS charge_reference TEXT;
+
+-- Drop the constraint if it exists to make this script idempotent
+ALTER TABLE damage_detections
+  DROP CONSTRAINT IF EXISTS chk_confidence_score;
 
 -- damage_detections.confidence_score was never range-checked, so a bad
 -- value from the ML service (e.g. > 1 or negative) would insert silently.
@@ -29,6 +32,8 @@ SET case_id = ci.case_id
 FROM case_images ci
 WHERE dd.image_id = ci.id AND dd.case_id IS NULL;
 
+-- Note: This will fail if there are any orphaned damage_detections 
+-- without a matching case_images record. 
 ALTER TABLE damage_detections
   ALTER COLUMN case_id SET NOT NULL;
 
