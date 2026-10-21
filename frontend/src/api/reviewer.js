@@ -1,16 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "./client";
-import { getMockReviewCase } from "./mocks/reviewerMockData";
-
-//same toggle as api/cases.js. Mock data is on unless VITE_USE_MOCK_API=false.
-const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API !== "false";
 
 //fetches one case for the 3D viewer. Error carry a numeric `status`
 export async function fetchReviewCase(id) {
-    if (USE_MOCK_API) {
-        return getMockReviewCase(id);
-    }
-
     try {
         const { data } = await apiClient.get(`/review/cases/${id}`);
         return data;

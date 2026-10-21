@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useUploadStore } from './useUploadStore';
-import { saveFlightLog } from '../../../api/flightLog';
+import { fetchFlightLogs, saveFlightLog, updateFlightLog } from '../../../api/flightLog';
 import './FlightLogForm.css';
 
 const steps = ['Flight Notes', 'Pre-flight Checklist', 'Review & Submit'];
@@ -99,8 +99,31 @@ export default function FlightLogForm({ onSubmitted, caseId }) {
         saving: false,
         submitError: '',
         saveWarnings: [],
+        existingLogId: null,
         isDark: false,
     }));
+
+    useEffect(() => {
+        if (!caseId) return undefined;
+        let active = true;
+        fetchFlightLogs(caseId).then(({ flightLogs }) => {
+            if (!active || !flightLogs?.length) return;
+            const log = flightLogs[0];
+            const checkedById = new Map((Array.isArray(log.checklist) ? log.checklist : [])
+                .map((item) => [item.id, Boolean(item.checked)]));
+            setFlightLog(log);
+            setState((prev) => ({
+                ...prev,
+                notes: { ...getDefaultNotes(), ...log },
+                checklist: initialChecklist.map((item) => ({ ...item, checked: checkedById.get(item.id) || false })),
+                existingLogId: log.id,
+                submitError: '',
+            }));
+        }).catch(() => {
+            // An absent/unavailable saved log should not prevent a new one.
+        });
+        return () => { active = false; };
+    }, [caseId, setFlightLog]);
 
     const criticalPending = state.checklist.filter((item) => item.critical && !item.checked);
     const totalChecked = state.checklist.filter((item) => item.checked).length;
@@ -151,10 +174,13 @@ export default function FlightLogForm({ onSubmitted, caseId }) {
 
         setState((prev) => ({ ...prev, saving: true, submitError: '' }));
         try {
-            const { warnings } = await saveFlightLog(caseId, payload);
+            const response = state.existingLogId
+                ? await updateFlightLog(caseId, state.existingLogId, payload)
+                : await saveFlightLog(caseId, payload);
+            const { warnings, flightLog } = response;
             setFlightLog(payload);
             if (onSubmitted) onSubmitted(payload);
-            setState((prev) => ({ ...prev, saving: false, submitted: true, saveWarnings: warnings || [] }));
+            setState((prev) => ({ ...prev, saving: false, submitted: true, existingLogId: flightLog?.id || prev.existingLogId, saveWarnings: warnings || [] }));
         } catch (err) {
             const data = err.response?.data;
             if (data?.code === 'FLIGHT_LOG_INVALID') {

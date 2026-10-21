@@ -25,6 +25,7 @@ export default function UploadWizard() {
   const ensureCase = useUploadStore((s) => s.ensureCase);
   const clearImages = useUploadStore((s) => s.clearImages);
   const [uploading, setUploading] = useState(false);
+  const [savedImageCount, setSavedImageCount] = useState(0);
 
   // Clears store data left over from a different case.
   useEffect(() => {
@@ -32,7 +33,7 @@ export default function UploadWizard() {
   }, [caseId, ensureCase]);
 
   const handleUpload = async () => {
-    if (images.length === 0) {
+    if (images.length === 0 && savedImageCount === 0) {
       message.warning("Add at least one JPEG before uploading.");
       return;
     }
@@ -43,6 +44,10 @@ export default function UploadWizard() {
 
     setUploading(true);
     try {
+      if (images.length === 0) {
+        navigate(`/investigator/cases/${caseId}/status`);
+        return;
+      }
       const result = await uploadCaseImages(caseId, images);
       message.success(`Uploaded ${result.uploaded} image(s).`);
       clearImages();
@@ -61,7 +66,7 @@ export default function UploadWizard() {
       <Text type="secondary">Case ID: {caseId}</Text>
 
       <div style={{ margin: "16px 0" }}>
-        <ImageDropzone caseId={caseId} />
+        <ImageDropzone caseId={caseId} onExistingCountChange={setSavedImageCount} />
       </div>
 
       <GcpTableInput caseId={caseId} />
@@ -73,9 +78,9 @@ export default function UploadWizard() {
           type="primary"
           onClick={handleUpload}
           loading={uploading}
-          disabled={images.length === 0}
+          disabled={images.length === 0 && savedImageCount === 0}
         >
-          Upload {images.length} image{images.length === 1 ? "" : "s"}
+          {images.length ? `Upload ${images.length} image${images.length === 1 ? "" : "s"}` : "Continue to Status"}
         </Button>
         <Button onClick={() => navigate("/investigator/cases")} disabled={uploading}>
           Back to cases

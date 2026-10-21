@@ -22,3 +22,13 @@ export async function uploadCaseImages(caseId, files) {
   }
   return body; // { caseId, uploaded, images: [...] }
 }
+
+export async function fetchCaseImages(caseId) {
+  const token = localStorage.getItem("jwt_token");
+  const res = await fetch(`${API_BASE}/cases/${caseId}/images`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.error || `Could not load images (HTTP ${res.status})`);
+  return body;
+}
