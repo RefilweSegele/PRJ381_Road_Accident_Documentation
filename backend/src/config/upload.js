@@ -21,9 +21,11 @@ module.exports = {
     TEMP_DIR: process.env.UPLOAD_TEMP_DIR || path.join(BACKEND_ROOT, 'tmp', 'uploads'),
 
     LOCAL_ROOT: process.env.UPLOAD_LOCAL_ROOT || path.join(BACKEND_ROOT, "uploads"),    
-    // backend/src/config/upload.js
+    // Local files are delivered through the authenticated API route. This is
+    // deliberately not an express.static path because accident evidence may
+    // be sensitive.
     PUBLIC_BASE_URL:
-    process.env.UPLOAD_PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 5000}/static/uploads`,
+    process.env.UPLOAD_PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 5000}/api/uploads`,
     
     // Only read when STORAGE_DRIVER=s3
     S3: {

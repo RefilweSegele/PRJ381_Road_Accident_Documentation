@@ -1,10 +1,17 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Form, Input, Button, Checkbox, Card, Typography, message } from 'antd';
+import { Link, useNavigate } from 'react-router-dom';
+import { Form, Input, Button, Checkbox, Card, Typography, message, Select } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
 const { Title, Text } = Typography;
+
+const HOME_BY_ROLE = {
+  investigator: "/investigator/cases",
+  insurer: "/review/cases",
+  law_enforcement: "/review/cases",
+  admin: "/admin/users",
+};
 
 export const setupAxiosInterceptors = () => {
   axios.interceptors.request.use(
@@ -26,32 +33,20 @@ export const LoginPage = () => {
   const handleLogin = async (values) => {
     setLoading(true);
     try {
-      // This will be replaced later by backend authentication endpoint when we do the backend 
-      // const response = await axios.post('/api/auth/login', {
-      //   email: values.email,
-      //   password: values.password,
-      // });
-      
-      const mockResponse = {
-        token: 'mock-jwt-token-xyz',
-        role: 'investigator' // Can be 'investigator', 'insurer', 'law_enforcement', or 'admin'
-      };
+      const { data: response } = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/auth/login`,
+        { email: values.email, password: values.password, role: values.role },
+      );
 
-      localStorage.setItem('jwt_token', mockResponse.token);
-      localStorage.setItem('user_role', mockResponse.role);
+      localStorage.setItem('jwt_token', response.token);
+      localStorage.setItem('user_role', response.role);
       
       setupAxiosInterceptors();
 
       message.success('Authentication successful!');
-
   
-      if (mockResponse.role === 'admin') {
-        navigate('/admin/users');
-      } else if (mockResponse.role === 'insurer' || mockResponse.role === 'law_enforcement') {
-        navigate('/review/cases');
-      } else {
-        navigate('/investigator/cases');
-      }
+      navigate(HOME_BY_ROLE[response.role] || "/investigator/cases");
+
     } catch (error) {
       message.error('Invalid email or password.');
     } finally {
@@ -69,7 +64,7 @@ export const LoginPage = () => {
 
         <Form
           name="login_form"
-          initialValues={{ remember: true }}
+          initialValues={{ remember: true, role: 'investigator' }}
           onFinish={handleLogin}
           layout="vertical"
         >
@@ -81,6 +76,15 @@ export const LoginPage = () => {
             ]}
           >
             <Input prefix={<UserOutlined />} placeholder="Email Address" size="large" />
+          </Form.Item>
+
+          <Form.Item name="role" label="Demo role" rules={[{ required: true }]}>
+            <Select options={[
+              { value: 'investigator', label: 'Investigator' },
+              { value: 'insurer', label: 'Insurer reviewer' },
+              { value: 'law_enforcement', label: 'Law-enforcement reviewer' },
+              { value: 'admin', label: 'Administrator' },
+            ]} />
           </Form.Item>
 
           <Form.Item
@@ -95,12 +99,18 @@ export const LoginPage = () => {
               <Checkbox>Remember me</Checkbox>
             </Form.Item>
           </Form.Item>
+          <Text type="secondary" style={{ display: 'block', fontSize: 12 }}>
+            Demo accounts: investigator, insurer, law, or admin @daias.demo. Password: SecurePassword123!
+          </Text>
 
           <Form.Item>
             <Button type="primary" htmlType="submit" size="large" loading={loading} block>
               Log in
             </Button>
           </Form.Item>
+          <Text type="secondary" style={{ display: 'block', textAlign: 'center' }}>
+            Need a demo account? <Link to="/register">Register</Link>
+          </Text>
         </Form>
       </Card>
     </div>
