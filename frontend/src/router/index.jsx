@@ -1,6 +1,7 @@
 // frontend/src/router/index.jsx
 import { Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "../features/auth/LoginPage";
+import RegistrationPage from "../features/auth/RegistrationPage";
 import RequireAuth from "../features/auth/RequireAuth";
 import CaseDashboard from "../features/investigator/CaseDashboard";
 import CaseIntakeForm from "../features/investigator/CaseIntakeForm";
@@ -16,6 +17,7 @@ export default function AppRoutes() {
     <Routes>
       {/* Public */}
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegistrationPage />} />
 
       {/* Investigator */}
       <Route
