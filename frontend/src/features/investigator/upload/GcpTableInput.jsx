@@ -91,7 +91,14 @@ export default function GcpTableInput({ caseId }) {
 
     return (
         <Card className="gcp-card">
-            <Title level={4}>Step B: Ground Control Points (GCPs)</Title>
+            <Title level={4}>Step B: Ground Control Points (Optional)</Title>
+            <Alert
+                className="gcp-alert"
+                type="info"
+                showIcon
+                message="Optional for DJI Neo processing"
+                description="You can import surveyed GCPs for improved accuracy. If none are supplied, the system creates estimated demo points around the saved case coordinates; they are not survey control points."
+            />
 
             <Upload beforeUpload={handleFileUpload} accept=".csv,.txt" showUploadList={false} disabled={busy}>
                 <Button icon={<UploadOutlined />} loading={busy}>Import GCPs (CSV / TXT)</Button>

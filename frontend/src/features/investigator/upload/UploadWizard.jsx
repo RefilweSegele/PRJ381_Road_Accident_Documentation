@@ -49,7 +49,7 @@ export default function UploadWizard() {
         return;
       }
       const result = await uploadCaseImages(caseId, images);
-      message.success(`Uploaded ${result.uploaded} image(s).`);
+      message.success(`Uploaded ${result.uploaded} image(s). ${result.generatedEstimatedGcps ? "Estimated demo GCPs were generated from the case location." : ""}`);
       clearImages();
       navigate(`/investigator/cases/${caseId}/status`);
     } catch (err) {
