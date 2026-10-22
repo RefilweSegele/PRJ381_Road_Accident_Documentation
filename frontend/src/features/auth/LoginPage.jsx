@@ -1,6 +1,6 @@
 
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Form,
   Input,
@@ -8,12 +8,19 @@ import {
   Checkbox,
   Card,
   Typography,
-  message,
+  message
 } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import apiClient from "../../api/client";
 
 const { Title, Text } = Typography;
+
+const HOME_BY_ROLE = {
+  investigator: "/investigator/cases",
+  insurer: "/review/cases",
+  law_enforcement: "/review/cases",
+  admin: "/admin/users"
+};
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
@@ -25,7 +32,7 @@ export default function LoginPage() {
     try {
       const { data } = await apiClient.post("/auth/login", {
         email: values.email.trim(),
-        password: values.password,
+        password: values.password
       });
 
       if (!data.token || !data.role) {
@@ -37,11 +44,9 @@ export default function LoginPage() {
 
       message.success("Authentication successful!");
 
-      if (data.role === "admin") {
-        navigate("/reports/generate", { replace: true });
-      } else {
-        navigate("/review/cases", { replace: true });
-      }
+      navigate(HOME_BY_ROLE[data.role] || "/review/cases", {
+        replace: true
+      });
     } catch (error) {
       message.error(
         error.response?.data?.error ||
@@ -61,9 +66,10 @@ export default function LoginPage() {
         alignItems: "center",
         minHeight: "100vh",
         background: "#f0f2f5",
+        padding: 24
       }}
     >
-      <Card style={{ width: 400, maxWidth: "95%" }}>
+      <Card style={{ width: 400, maxWidth: "100%" }}>
         <div style={{ textAlign: "center", marginBottom: 24 }}>
           <Title level={3}>DAIAS Portal</Title>
           <Text type="secondary">
@@ -73,6 +79,7 @@ export default function LoginPage() {
 
         <Form
           name="login_form"
+          initialValues={{ remember: true }}
           onFinish={handleLogin}
           layout="vertical"
         >
@@ -80,7 +87,7 @@ export default function LoginPage() {
             name="email"
             rules={[
               { required: true, message: "Enter your email" },
-              { type: "email", message: "Enter a valid email" },
+              { type: "email", message: "Enter a valid email" }
             ]}
           >
             <Input
@@ -93,7 +100,7 @@ export default function LoginPage() {
           <Form.Item
             name="password"
             rules={[
-              { required: true, message: "Enter your password" },
+              { required: true, message: "Enter your password" }
             ]}
           >
             <Input.Password
@@ -107,15 +114,27 @@ export default function LoginPage() {
             <Checkbox>Remember me</Checkbox>
           </Form.Item>
 
-          <Button
-            type="primary"
-            htmlType="submit"
-            size="large"
-            loading={loading}
-            block
+          <Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              size="large"
+              loading={loading}
+              block
+            >
+              Log in
+            </Button>
+          </Form.Item>
+
+          <Text
+            type="secondary"
+            style={{
+              display: "block",
+              textAlign: "center"
+            }}
           >
-            Log in
-          </Button>
+            Need an account? <Link to="/register">Register</Link>
+          </Text>
         </Form>
       </Card>
     </div>

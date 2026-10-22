@@ -1,39 +1,49 @@
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Alert, Button, Space, Spin } from "antd";
 import {
   FilePdfOutlined,
-  ArrowLeftOutlined,
+  ArrowLeftOutlined
 } from "@ant-design/icons";
 
 import ThreeCanvas from "./Viewer3D/ThreeCanvas";
 import UIOverlays from "./Viewer3D/UIOverlays";
+import { useReviewCase } from "../../api/reviewer";
 
 export default function CaseDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [measurementDistance, setMeasurementDistance] =
-    useState(null);
-
+  const [measurementDistance, setMeasurementDistance] = useState(null);
   const [modelAvailable, setModelAvailable] = useState(false);
-  const [checkingModel, setCheckingModel] = useState(true);
+  const [checkingModel, setCheckingModel] = useState(false);
 
-  const modelUrl = "/models/DamagedHelmet.glb";
+  const {
+    data: caseData,
+    isLoading,
+    error
+  } = useReviewCase(id);
 
-  // Check that the 3D model exists and is a valid GLB file.
+  const modelUrl = caseData?.modelUrl;
+
   useEffect(() => {
     const controller = new AbortController();
 
-    const checkModel = async () => {
+    if (!modelUrl) {
+      setModelAvailable(false);
+      setCheckingModel(false);
+      return () => controller.abort();
+    }
+
+    async function checkModel() {
       setCheckingModel(true);
       setModelAvailable(false);
 
       try {
         const response = await fetch(modelUrl, {
           method: "GET",
-          signal: controller.signal,
+          signal: controller.signal
         });
 
         if (!response.ok) {
@@ -43,7 +53,6 @@ export default function CaseDetailPage() {
         const contentType =
           response.headers.get("content-type") || "";
 
-        // Vite may return index.html for missing model files.
         if (contentType.includes("text/html")) {
           throw new Error("Model file is missing");
         }
@@ -51,7 +60,6 @@ export default function CaseDetailPage() {
         const buffer = await response.arrayBuffer();
         const view = new DataView(buffer);
 
-        // GLB files begin with the binary magic value "glTF".
         const validGlb =
           buffer.byteLength >= 12 &&
           view.getUint32(0, true) === 0x46546c67 &&
@@ -65,12 +73,9 @@ export default function CaseDetailPage() {
         if (!controller.signal.aborted) {
           setModelAvailable(true);
         }
-      } catch (error) {
+      } catch (err) {
         if (!controller.signal.aborted) {
-          console.warn(
-            "3D model unavailable:",
-            error.message
-          );
+          console.warn("3D model unavailable:", err.message);
           setModelAvailable(false);
         }
       } finally {
@@ -78,55 +83,67 @@ export default function CaseDetailPage() {
           setCheckingModel(false);
         }
       }
-    };
+    }
 
     checkModel();
 
-    return () => {
-      controller.abort();
-    };
+    return () => controller.abort();
   }, [modelUrl]);
 
-  // Existing sample detection data.
-  // Replace with database records when detection integration is ready.
-  const sampleDamageBoxes = [
-    {
-      damageType: "Frontal Bumper Crumple",
-      confidence: 0.9425,
-      boundingBox: {
-        unit: "meters",
-        x_min: -1.24,
-        x_max: -0.85,
-        y_min: 0.45,
-        y_max: 1.10,
-        z_min: 0.12,
-        z_max: 0.68,
-      },
-    },
-    {
-      damageType: "Windshielf Structural Crack",
-      confidence: 0.8810,
-      boundingBox: {
-        unit: "meters",
-        x_min: -0.40,
-        x_max: 0.35,
-        y_min: 1.20,
-        y_max: 1.75,
-        z_min: 0.85,
-        z_max: 1.30,
-      },
-    },
-  ];
-
   const handleGenerateReport = () => {
-    navigate(
-      `/reports/generate?caseId=${encodeURIComponent(id)}`
-    );
+    navigate(`/reports/generate?caseId=${encodeURIComponent(id)}`);
   };
 
   const handleBackToCases = () => {
     navigate("/review/cases");
   };
+
+  if (isLoading) {
+    return (
+      <div style={{ padding: 48, textAlign: "center" }}>
+        <Spin size="large" />
+        <p>Loading case...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    const status = error.status ?? error.response?.status;
+
+    return (
+      <Alert
+        type="error"
+        showIcon
+        message={
+          status === 404
+            ? `Case ${id} was not found`
+            : "Could not load the case"
+        }
+        description={
+          status === 409
+            ? error.message
+            : status === 404
+              ? "The requested case does not exist."
+              : "Please try again."
+        }
+        action={
+          <Button onClick={handleBackToCases}>
+            Back to Cases
+          </Button>
+        }
+      />
+    );
+  }
+
+  if (!caseData) {
+    return (
+      <Alert
+        type="warning"
+        showIcon
+        message="Case information is unavailable"
+      />
+    );
+  }
 
   return (
     <div
@@ -134,10 +151,9 @@ export default function CaseDetailPage() {
         position: "relative",
         minHeight: "100vh",
         padding: 16,
-        background: "#f5f5f5",
+        background: "#f5f5f5"
       }}
     >
-      {/* Case header and navigation */}
       <div
         style={{
           display: "flex",
@@ -145,11 +161,11 @@ export default function CaseDetailPage() {
           alignItems: "center",
           flexWrap: "wrap",
           gap: 12,
-          marginBottom: 20,
+          marginBottom: 20
         }}
       >
         <h1 style={{ margin: 0 }}>
-          Case {id} - 3D Viewer
+          Case {caseData.caseReference || id} - 3D Viewer
         </h1>
 
         <Space wrap>
@@ -170,20 +186,19 @@ export default function CaseDetailPage() {
         </Space>
       </div>
 
-      {/* 3D viewer availability */}
+      {caseData.scaleFactor == null && (
+        <Alert
+          type="info"
+          showIcon
+          message="Measurements are unscaled until calibration data is available."
+          style={{ marginBottom: 16 }}
+        />
+      )}
+
       {checkingModel ? (
-        <div
-          style={{
-            textAlign: "center",
-            padding: 48,
-            background: "#fff",
-            borderRadius: 8,
-          }}
-        >
+        <div style={{ textAlign: "center", padding: 48 }}>
           <Spin size="large" />
-          <p style={{ marginTop: 16 }}>
-            Checking 3D model availability...
-          </p>
+          <p>Checking 3D model availability...</p>
         </div>
       ) : modelAvailable ? (
         <>
@@ -194,7 +209,7 @@ export default function CaseDetailPage() {
 
           <UIOverlays
             measurementDistance={measurementDistance}
-            damageBoxes={sampleDamageBoxes}
+            damageBoxes={caseData.damageBoxes || []}
           />
         </>
       ) : (
@@ -206,23 +221,18 @@ export default function CaseDetailPage() {
             <>
               <p>
                 No valid 3D model is currently available
-                for Case {id}.
+                for this case.
               </p>
               <p>
-                The 3D viewer will become available
-                when the required model file is supplied.
+                The viewer will become available when
+                the case has a valid model file.
               </p>
               <p style={{ marginBottom: 0 }}>
-                You can still generate and download
-                forensic reports using the
-                Generate Report button above.
+                You can still generate a report using
+                the Generate Report button above.
               </p>
             </>
           }
-          style={{
-            marginTop: 16,
-            padding: 20,
-          }}
         />
       )}
     </div>

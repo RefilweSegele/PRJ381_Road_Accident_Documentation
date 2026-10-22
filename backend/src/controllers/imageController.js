@@ -1,5 +1,6 @@
 const upload = require("../config/upload");
 const imageService = require("../services/imageService");
+const { refreshCaptureStatus } = require("../services/captureStatusService");
 
 // POST /api/cases/:id/upload/images — batch JPEG upload.
 // requireCase + multer have already run: req.caseId is a verified case and
@@ -7,10 +8,12 @@ const imageService = require("../services/imageService");
 async function uploadImages(req, res, next) {
     try {
         const images = await imageService.saveImages(req.caseId, req.files);
+        const pipeline = await refreshCaptureStatus(req.caseId);
         res.status(201).json({
             caseId: req.caseId,
             uploaded: images.length,
-            images
+            images,
+            ...pipeline,
         });
 
     } catch (error) {

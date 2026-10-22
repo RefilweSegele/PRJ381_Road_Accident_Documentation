@@ -4,6 +4,7 @@ require("dotenv").config();
 const path = require("path");
 const fs = require("fs");
 const jwt = require("jsonwebtoken");
+const pool = require("./src/config/db");
 
 const caseRoutes = require("./src/routes/case.routes");
 const authRoutes = require("./src/routes/auth.routes");
@@ -35,29 +36,47 @@ app.get("/", (req, res) => {
   res.send("API is running...");
 });
 
-// Secure File Streaming Endpoint (Replaces public express.static)
-// Frontend <img> tags can request files like: /api/uploads/filename.jpg?token=JWT
-app.get("/api/uploads/:filename", (req, res) => {
-  const token = req.query.token || (req.headers["authorization"] && req.headers["authorization"].split(" ")[1]);
+// Secure File Streaming Endpoint. The storage key is nested (for example,
+// cases/1/images/<uuid>.jpg), so the named wildcard intentionally retains
+// each path segment. Files are never exposed with express.static.
+app.get("/api/uploads/*storagePath", async (req, res) => {
+  const token = req.headers["authorization"] && req.headers["authorization"].split(" ")[1];
 
   if (!token) {
     return res.status(401).json({ error: "Access token missing" });
   }
 
-  jwt.verify(token, JWT_SECRET, (err, user) => {
+  jwt.verify(token, JWT_SECRET, async (err, user) => {
     if (err) {
       return res.status(403).json({ error: "Invalid or expired token" });
     }
 
-    const filename = req.params.filename;
-    const safeFilename = path.basename(filename); // Prevent directory traversal attacks
-    const filePath = path.join(uploadConfig.LOCAL_ROOT || path.join(__dirname, "uploads"), safeFilename);
-
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: "File not found" });
+    const storageKey = Array.isArray(req.params.storagePath)
+      ? req.params.storagePath.join("/")
+      : String(req.params.storagePath || "");
+    const segments = storageKey.split("/");
+    if (!storageKey || segments.some((segment) => !segment || segment === "." || segment === ".." || segment.includes("\\"))) {
+      return res.status(400).json({ error: "Invalid upload path" });
     }
 
-    res.sendFile(filePath);
+    try {
+      // Only keys registered as evidence records may be streamed. This keeps
+      // arbitrary files beneath LOCAL_ROOT out of reach even for a valid JWT.
+      const { rowCount } = await pool.query(
+        "SELECT 1 FROM case_images WHERE storage_key = $1", [storageKey],
+      );
+      if (rowCount === 0) return res.status(404).json({ error: "Image not found" });
+
+      const storageRoot = uploadConfig.LOCAL_ROOT || path.join(__dirname, "uploads");
+      const filePath = path.resolve(storageRoot, ...segments);
+      if (!filePath.startsWith(`${path.resolve(storageRoot)}${path.sep}`) || !fs.existsSync(filePath)) {
+        return res.status(404).json({ error: "Image file not found" });
+      }
+
+      return res.sendFile(filePath);
+    } catch (error) {
+      return res.status(500).json({ error: "Could not retrieve image" });
+    }
   });
 });
 

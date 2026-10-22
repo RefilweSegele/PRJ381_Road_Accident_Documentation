@@ -1,14 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const reviewerController = require("../../controllers/reviewerController");
+const { authenticateToken, authorizeRoles } = require("../auth.routes");
 
-/*
-    add requireAuth and requireRole when member 1 middleware exists and requireRole.js in the agreed file structure
-*/ 
+const REVIEW_ROLES = authorizeRoles("admin", "insurer", "law_enforcement", "investigator");
 
 // GET /api/review/cases — completed cases shown in SearchPortal.
-router.get("/cases", reviewerController.searchCases);
+router.get("/cases", authenticateToken, REVIEW_ROLES, reviewerController.searchCases);
 // GET /api/review/cases/:id — reviewer-facing case detail.
-router.get("/cases/:id", reviewerController.getCaseForReview);
+router.get("/cases/:id", authenticateToken, REVIEW_ROLES, reviewerController.getCaseForReview);
 
 module.exports = router;
