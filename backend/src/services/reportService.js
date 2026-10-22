@@ -1,7 +1,9 @@
+
 const pool = require("../config/db");
 const { createPdfBuffer } = require("./pdfService");
 
 const MAX_TEXT_LENGTH = 5000;
+
 function optionalText(value, field) {
   if (value === undefined || value === null || value === "") return null;
   if (typeof value !== "string") throw Object.assign(new Error(`${field} must be text`), { status: 400 });
@@ -64,11 +66,12 @@ async function collectCaseSnapshot(caseId) {
 }
 
 async function createReport(caseId, input, user) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) throw Object.assign(new Error("Report body must be an object"), { status: 400 });
   const snapshot = await collectCaseSnapshot(caseId);
   if (!snapshot) return null;
   const reportData = {
     ...snapshot,
-    title: "Forensic Road Accident Report",
+    title: optionalText(input.title, "title") || "Forensic Road Accident Report",
     generatedAt: new Date().toISOString(),
     generatedBy: user?.email || String(user?.userId || "unknown"),
     executiveSummary: optionalText(input.executiveSummary, "executiveSummary"),

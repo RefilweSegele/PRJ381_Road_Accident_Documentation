@@ -30,12 +30,15 @@ async function createUser({ name, email, password, role }) {
   if (typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) throw Object.assign(new Error("A valid email is required"), { status: 400 });
   if (typeof password !== "string" || password.length < 12 || password.length > 200) throw Object.assign(new Error("password must be between 12 and 200 characters"), { status: 400 });
   if (!ALLOWED_ROLES.has(role)) throw Object.assign(new Error("Invalid role"), { status: 400 });
+  const normalizedEmail = email.trim().toLowerCase();
+  const existing = await pool.query("SELECT id FROM users WHERE LOWER(email) = $1 LIMIT 1", [normalizedEmail]);
+  if (existing.rows.length) throw Object.assign(new Error("A user with this email already exists"), { status: 409 });
   const passwordHash = await bcrypt.hash(password, 12);
   try {
     const result = await pool.query(
       `INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4)
        RETURNING id, name, email, role, status, created_at, updated_at`,
-      [name.trim(), email.trim().toLowerCase(), passwordHash, role]);
+      [name.trim(), normalizedEmail, passwordHash, role]);
     return result.rows[0];
   } catch (error) {
     if (error.code === "23505") throw Object.assign(new Error("A user with this email already exists"), { status: 409 });
