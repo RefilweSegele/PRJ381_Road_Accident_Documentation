@@ -33,10 +33,11 @@ class LocalDiskStorageAdapter {
         }
     }
 
-    // The DB stores only the key; the URL is derived here at read time, so
-    // changing host/driver never requires a data migration.
+    // The DB stores only the key; the authenticated API URL is derived here
+    // at read time, so changing host/driver never requires a data migration.
     getUrl(storageKey) {
-        return `${config.PUBLIC_BASE_URL}/${storageKey}`;
+        const encodedKey = storageKey.split("/").map(encodeURIComponent).join("/");
+        return `${config.PUBLIC_BASE_URL}/${encodedKey}`;
     }
 }
 

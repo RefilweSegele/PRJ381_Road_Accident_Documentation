@@ -1,12 +1,13 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const { login } = require('../controllers/authController');
+const { login, register } = require('../controllers/authController');
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'daias_super_secret_key';
 
 // POST /api/auth/login
 router.post('/login', login);
+router.post('/register', register);
 
 // 1. JWT Authentication Middleware
 const authenticateToken = (req, res, next) => {

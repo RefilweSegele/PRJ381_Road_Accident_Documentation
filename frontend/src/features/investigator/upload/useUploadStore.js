@@ -1,14 +1,23 @@
-import {create} from 'zustand';
+import { create } from "zustand";
 
-export const useUploadStore = create((set) => ({
-    images: [],
-    gcpData: [],
+const EMPTY = { images: [], gcpData: [], flightLog: null };
 
-    setimages: (newImages) => set({images: newImages}),
-    setGcpData: (data) => set({gcpData: data}),
+export const useUploadStore = create((set, get) => ({
+  caseId: null,
+  ...EMPTY,
 
-    // Validation: Flags if there are fewer that 7 GCPs
-    isValidGcpCount: () => {
-        return get().gcpData.length >= 7;
-    }
+  // Called when the wizard opens for a case. Clears everything if the case changed,
+  // so images from one case never end up attached to another.
+  ensureCase: (caseId) => {
+    if (get().caseId === caseId) return;
+    set({ caseId, ...EMPTY });
+  },
+
+  setImages: (images) => set({ images }),
+  clearImages: () => set({ images: [] }),
+  setGcpData: (gcpData) => set({ gcpData }),
+  setFlightLog: (flightLog) => set({ flightLog }),
+
+  // Advisory only: the UI warns below 7 GCPs but does not block upload.
+  isValidGcpCount: () => get().gcpData.length >= 7,
 }));

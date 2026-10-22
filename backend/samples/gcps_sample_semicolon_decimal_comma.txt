@@ -1,0 +1,4 @@
+# exported from a survey app with a European locale
+Marker;Latitude;Longitude;Elevation
+GCP1;-26,204103;28,047305;1752,4
+GCP2;-26,204410;28,047890;1752,1

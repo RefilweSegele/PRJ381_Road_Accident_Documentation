@@ -1,5 +1,27 @@
 # 🚁 Drone-Assisted Insurance Assessment Service (DAIAS)
 
+## Demo accounts and capture flow
+
+Login is backed by the API and the signed JWT role is enforced by server
+routes. Use password `SecurePassword123!` with one of these demo accounts:
+
+| Role | Email |
+| --- | --- |
+| Investigator | `investigator@daias.demo` |
+| Insurer reviewer | `insurer@daias.demo` |
+| Law-enforcement reviewer | `law@daias.demo` |
+| Administrator | `admin@daias.demo` |
+
+Run `npm run migrate` in `backend` after configuring PostgreSQL. The capture
+workflow persists case details, vehicles, GCPs, and the flight log. It moves a
+case to `processed` only after images, GCPs, and a flight log are all stored,
+making the case available to reviewer accounts. These static credentials are
+for the demo only. The **Register** screen can create a persistent demo
+account and lets users choose a role to evaluate each workflow. Self-selected
+roles, including admin, are not production access control; replace them with
+administrator-managed roles or an identity provider and set a strong
+`JWT_SECRET` before deployment.
+
 <p align="center">
   <strong>Transforming Road Accident Investigations through Drone Technology, 3D Mapping, and Intelligent Spatial Analysis.</strong>
 </p>
