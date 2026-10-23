@@ -31,6 +31,7 @@ function toApiCase(row) {
     updatedAt: row.updated_at,
     status: row.status,
     assignedInvestigator: row.assigned_investigator,
+    modelUrl: row.model_file_path, // Fixed: This now correctly maps to caseData.modelUrl for the frontend
     vehicleCount: 0, // TODO: replace with real count once vehicles table exists
   };
 }

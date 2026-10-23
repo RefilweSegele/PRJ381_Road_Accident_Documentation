@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS cases (
   -- auth/users table exists. Kept nullable and unconstrained so this
   -- migration doesn't depend on work landing first.
   assigned_investigator TEXT,
+  model_file_path TEXT, -- Added for the 3D Viewer pipeline
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

@@ -1,4 +1,6 @@
 const pool = require("../config/db");
+const fs = require("fs").promises;
+const path = require("path");
 
 const ESTIMATED_GCP_SOURCE = "AUTO_GENERATED_ESTIMATE_NOT_SURVEY_CONTROL";
 
@@ -53,14 +55,38 @@ async function refreshCaptureStatus(caseId) {
   if (generatedGcpIds.length) artefacts = { ...artefacts, has_gcps: true };
   const status = ready ? "processed" : "processing";
 
-  // A reviewer decision or explicit failure must not be overwritten by an
-  // investigator adding capture data later.
-  await pool.query(
-    `UPDATE cases
-     SET status = $1, updated_at = NOW()
-     WHERE id = $2 AND status NOT IN ('reviewed', 'failed')`,
-    [status, caseId],
-  );
+  let modelFilePath = null;
+
+  if (status === "processed") {
+    try {
+      const templatePath = path.join(__dirname, "../../template_model/template.glb");
+      const caseModelsDir = path.join(__dirname, `../../uploads/cases/${caseId}/models`);
+      const destPath = path.join(caseModelsDir, `${caseId}.glb`);
+
+      await fs.mkdir(caseModelsDir, { recursive: true });
+      await fs.copyFile(templatePath, destPath);
+
+      modelFilePath = `http://localhost:5000/static/uploads/cases/${caseId}/models/${caseId}.glb`;
+    } catch (error) {
+      console.error("Failed to copy model file:", error);
+    }
+  }
+
+  if (modelFilePath) {
+    await pool.query(
+      `UPDATE cases
+       SET status = $1, model_file_path = $2, updated_at = NOW()
+       WHERE id = $3 AND status NOT IN ('reviewed', 'failed')`,
+      [status, modelFilePath, caseId],
+    );
+  } else {
+    await pool.query(
+      `UPDATE cases
+       SET status = $1, updated_at = NOW()
+       WHERE id = $2 AND status NOT IN ('reviewed', 'failed')`,
+      [status, caseId],
+    );
+  }
 
   return { status, ready, generatedEstimatedGcps: generatedGcpIds.length, ...artefacts };
 }
