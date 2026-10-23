@@ -18,7 +18,7 @@ export default function ImageDropzone({ caseId, onExistingCountChange }) {
         fetchCaseImages(caseId)
             .then(async (data) => {
                 if (!active) return;
-                const token = localStorage.getItem('jwt_token');
+                const token = localStorage.getItem('authToken');
                 const withPreviews = await Promise.all((data.images || []).map(async (image) => {
                     const response = await fetch(image.url, {
                         headers: token ? { Authorization: `Bearer ${token}` } : {},

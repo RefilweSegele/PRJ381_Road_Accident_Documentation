@@ -73,7 +73,7 @@ export default function SearchPortal() {
   
   // Read the role and token keys written by the login page.
   const role = localStorage.getItem("user_role");
-  const isAuthenticated = Boolean(localStorage.getItem("jwt_token"));
+  const isAuthenticated = Boolean(localStorage.getItem("authToken"));
   // Fallback to "insurer" for demo purposes if the user isn't logged in yet
   const effectiveRole = role || "insurer"; 
 

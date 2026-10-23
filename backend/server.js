@@ -20,6 +20,10 @@ const flightLogRoutes = require("./src/routes/flightLog.routes");
 const { profile: droneProfile } = require("./src/controllers/flightLogController");
 const { uploadErrorHandler } = require("./src/middleware/errorHandler");
 
+const reportRoutes = require("./src/routes/report.routes");
+const adminRoutes = require("./src/routes/admin.routes");
+
+
 const app = express();
 const JWT_SECRET = process.env.JWT_SECRET || 'daias_super_secret_key';
 
@@ -88,6 +92,8 @@ app.use("/api/review", reviewerRoutes);
 // Image Upload & Storage API (POST /api/cases/:id/upload/images, GET /api/cases/:id/images)
 app.use("/api/cases", imageRoutes);
 
+app.use("/api", reportRoutes);
+app.use("/api/admin", adminRoutes);
 // GCP import (POST /api/cases/:id/gcps/import, POST|GET|DELETE /api/cases/:id/gcps)
 app.use("/api/cases", gcpRoutes);
 

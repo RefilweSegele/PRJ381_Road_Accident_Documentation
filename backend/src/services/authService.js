@@ -1,19 +1,30 @@
+
 const pool = require("../config/db");
 
 async function findUserByEmail(email) {
   const { rows } = await pool.query(
-    "SELECT id, email, password_hash, role FROM users WHERE email = $1", [email],
+    `SELECT id, name, email, password_hash, role, status
+     FROM users
+     WHERE LOWER(email) = LOWER($1)
+     LIMIT 1`,
+    [email]
   );
+
   return rows[0] || null;
 }
 
-async function createUser({ email, passwordHash, role }) {
+async function createUser({ name, email, passwordHash, role }) {
   const { rows } = await pool.query(
-    `INSERT INTO users (email, password_hash, role)
-     VALUES ($1, $2, $3) RETURNING id, email, role, created_at`,
-    [email, passwordHash, role],
+    `INSERT INTO users (name, email, password_hash, role, status)
+     VALUES ($1, $2, $3, $4, 'active')
+     RETURNING id, name, email, role, status, created_at`,
+    [name, email, passwordHash, role]
   );
+
   return rows[0];
 }
 
-module.exports = { findUserByEmail, createUser };
+module.exports = {
+  findUserByEmail,
+  createUser
+};
