@@ -20,6 +20,10 @@ const flightLogRoutes = require("./src/routes/flightLog.routes");
 const { profile: droneProfile } = require("./src/controllers/flightLogController");
 const { uploadErrorHandler } = require("./src/middleware/errorHandler");
 
+// Unofficial car-damage detection test endpoint (POST /api/damage/analyze)
+const damageRoutes = require("./src/routes/damage.routes");
+
+
 const app = express();
 const JWT_SECRET = process.env.JWT_SECRET || 'daias_super_secret_key';
 
@@ -96,6 +100,9 @@ app.use("/api/cases", flightLogRoutes);
 
 // Neo hardware limits the validators enforce (read-only, for the frontend form)
 app.get("/api/drone-profile", droneProfile);
+
+// Damage detection test (YOLO segmentation)
+app.use("/api/damage", damageRoutes);
 
 // Upload errors (multer limits, bad file type, case not found) -> proper
 // 400/404/413/415. Must stay BEFORE the generic handler below; it passes

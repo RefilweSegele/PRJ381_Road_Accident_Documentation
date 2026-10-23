@@ -11,6 +11,7 @@ import CaseDetailPage from "../features/reviewer/CaseDetailPage";
 import ReportGenerator from "../features/reviewer/ReportGenerator";
 import UserPipelineMgmt from "../features/admin/UserPipelineMgmt";
 import CaseStatusPage from "../features/investigator/CaseStatusPage";
+import DamageTestPage from "../features/investigator/damage/damageTestPage";//for the damage test page
 
 export default function AppRoutes() {
   return (
@@ -46,6 +47,14 @@ export default function AppRoutes() {
       <Route path="/admin" element={<RequireAuth roles={["admin"]} />}>
         <Route index element={<Navigate to="users" replace />} />
         <Route path="users" element={<UserPipelineMgmt />} />
+      </Route>
+
+     {/* Unofficial damage-detection test page (any signed-in role) */}
+      <Route
+        path="/damage-test"
+        element={<RequireAuth roles={["investigator", "insurer", "law_enforcement", "admin"]} />}
+      >
+        <Route index element={<DamageTestPage />} />
       </Route>
 
       {/* Fallbacks */}
