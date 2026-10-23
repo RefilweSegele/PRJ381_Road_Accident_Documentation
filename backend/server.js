@@ -23,7 +23,6 @@ const { uploadErrorHandler } = require("./src/middleware/errorHandler");
 const reportRoutes = require("./src/routes/report.routes");
 const adminRoutes = require("./src/routes/admin.routes");
 
-
 const app = express();
 const JWT_SECRET = process.env.JWT_SECRET || 'daias_super_secret_key';
 
@@ -31,14 +30,16 @@ const JWT_SECRET = process.env.JWT_SECRET || 'daias_super_secret_key';
 app.use(cors());
 app.use(express.json());
 
+// Expose generated 3D models and static uploads so CaseDetailPage and ThreeCanvas can fetch .glb files
+const storageRoot = uploadConfig.LOCAL_ROOT || path.join(__dirname, "uploads");
+app.use("/static/uploads", express.static(storageRoot));
+
 // Test Route (use this to test if the server is running)
 app.get("/", (req, res) => {
   res.send("API is running...");
 });
 
-// Secure File Streaming Endpoint. The storage key is nested (for example,
-// cases/1/images/<uuid>.jpg), so the named wildcard intentionally retains
-// each path segment. Files are never exposed with express.static.
+// Secure File Streaming Endpoint.
 app.get("/api/uploads/*storagePath", async (req, res) => {
   const token = req.headers["authorization"] && req.headers["authorization"].split(" ")[1];
 
@@ -60,14 +61,11 @@ app.get("/api/uploads/*storagePath", async (req, res) => {
     }
 
     try {
-      // Only keys registered as evidence records may be streamed. This keeps
-      // arbitrary files beneath LOCAL_ROOT out of reach even for a valid JWT.
       const { rowCount } = await pool.query(
         "SELECT 1 FROM case_images WHERE storage_key = $1", [storageKey],
       );
       if (rowCount === 0) return res.status(404).json({ error: "Image not found" });
 
-      const storageRoot = uploadConfig.LOCAL_ROOT || path.join(__dirname, "uploads");
       const filePath = path.resolve(storageRoot, ...segments);
       if (!filePath.startsWith(`${path.resolve(storageRoot)}${path.sep}`) || !fs.existsSync(filePath)) {
         return res.status(404).json({ error: "Image file not found" });
@@ -103,13 +101,8 @@ app.use("/api/cases", flightLogRoutes);
 // Neo hardware limits the validators enforce (read-only, for the frontend form)
 app.get("/api/drone-profile", droneProfile);
 
-// Upload errors (multer limits, bad file type, case not found) -> proper
-// 400/404/413/415. Must stay BEFORE the generic handler below; it passes
-// anything it doesn't recognise on to it.
 app.use(uploadErrorHandler);
 
-// Centralized error handler — catches anything passed to next(err)
-// from the controllers instead of letting the request hang.
 app.use((err, req, res, next) => {
   console.error(err);
   res.status(500).json({ error: "Internal server error" });

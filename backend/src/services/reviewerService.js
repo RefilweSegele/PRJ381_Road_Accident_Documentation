@@ -1,13 +1,9 @@
-const caseService = require("./caseService");
 const pool = require("../config/db");
+const { ensureSceneModelForCase } = require("./captureStatusService");
 
-/*
-Reviewer-facing case detail - reuses caseService's base case shape and adds the review-only data (model path, scale factor, ML classification).
-*/
 const REVIEWABLE_STATUSES = ["processed", "reviewed"];
 
 async function getReviewableCaseById(id) {
-    // Fetch the case, its 3D model, and its damage detections concurrently
     const [caseRes, modelRes, detectionsRes] = await Promise.all([
         pool.query(
             `SELECT id, case_reference, incident_address, latitude, longitude, incident_date, status, assigned_investigator, accident_type, description, claim_number, insurer_name, charge_reference 
@@ -32,7 +28,15 @@ async function getReviewableCaseById(id) {
     if (caseRes.rows.length === 0) return null;
 
     const c = caseRes.rows[0];
-    const m = modelRes.rows[0] || {};
+    let m = modelRes.rows[0] || {};
+
+    // Auto-provision the 3D model for already-processed cases if missing
+    if (!m.model_key && REVIEWABLE_STATUSES.includes(c.status)) {
+        const generatedUrl = await ensureSceneModelForCase(c.id);
+        if (generatedUrl) {
+            m = { model_key: generatedUrl, scale_factor: null };
+        }
+    }
 
     return {
         id: c.id,
@@ -48,10 +52,8 @@ async function getReviewableCaseById(id) {
         claimNumber: c.claim_number,
         insurerName: c.insurer_name,
         chargeReference: c.charge_reference,
-        // Wire up the 3D scene model data
-        modelUrl: m.model_key || null, 
+        modelUrl: m.model_key || null,
         scaleFactor: m.scale_factor || null,
-        // Map the segmentation polygons and ML metrics
         damageBoxes: detectionsRes.rows.map((d) => ({
             id: d.id,
             imageId: d.image_id,
@@ -59,13 +61,12 @@ async function getReviewableCaseById(id) {
             damageClass: d.damage_class,
             severityLevel: d.severity_level,
             confidenceScore: d.confidence_score,
-            polygonCoords: d.polygon_coords, // pg automatically parses JSONB to an object/array
+            polygonCoords: d.polygon_coords,
         })),
     };
 }
 
 async function searchCases({ search, dateFrom, dateTo }) {
-    // The portal lists completed cases; date bounds include both selected calendar days.
     const conditions = ["status = ANY($1)"];
     const params = [REVIEWABLE_STATUSES];
 
@@ -84,7 +85,6 @@ async function searchCases({ search, dateFrom, dateTo }) {
         conditions.push(`incident_date::date <= $${params.length}::date`);
     }
 
-    // Pending count is global and does not change with the completed-case filters.
     const [casesResult, pendingResult] = await Promise.all([
         pool.query(
             `SELECT id, case_reference, incident_address, incident_date, status, claim_number, insurer_name, charge_reference
@@ -98,7 +98,6 @@ async function searchCases({ search, dateFrom, dateTo }) {
 
     return {
         cases: casesResult.rows.map((r) => ({
-            // Keep the display case number separate from the detail-route database ID.
             id: r.id,
             caseId: r.case_reference,
             location: r.incident_address,
@@ -114,5 +113,6 @@ async function searchCases({ search, dateFrom, dateTo }) {
 }
 
 module.exports = {
-    getReviewableCaseById, searchCases,
+    getReviewableCaseById,
+    searchCases,
 };

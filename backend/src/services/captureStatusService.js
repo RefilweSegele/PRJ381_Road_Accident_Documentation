@@ -1,12 +1,11 @@
 const pool = require("../config/db");
 const fs = require("fs").promises;
+const fsSync = require("fs");
 const path = require("path");
+const uploadConfig = require("../config/upload");
 
 const ESTIMATED_GCP_SOURCE = "AUTO_GENERATED_ESTIMATE_NOT_SURVEY_CONTROL";
 
-// Generates a small, evenly distributed demonstration grid around the original
-// case coordinate. These are estimates, not surveyed ground control points;
-// imported GCPs are always preserved and never replaced.
 async function generateEstimatedGcps(caseId) {
   const { rows } = await pool.query(
     "SELECT latitude, longitude FROM cases WHERE id = $1", [caseId],
@@ -19,12 +18,10 @@ async function generateEstimatedGcps(caseId) {
   );
   if (existing.rowCount) return [];
 
-  // About 20 m north/south and 20–35 m east/west at this latitude. The exact
-  // offsets are intentionally conservative for a small DJI Neo scene.
   const lat = Number(location.latitude);
   const lon = Number(location.longitude);
   const offsets = [[0.00018, -0.00028], [0.00018, 0.00028], [0, -0.00034],
-    [0, 0], [0, 0.00034], [-0.00018, -0.00028], [-0.00018, 0.00028]];
+    [0, 0], [0, 0.00034], [-0.00018, -0.00028], [-0.00018, -0.00028]];
   const pointIds = offsets.map((_, index) => `EST-GCP-${String(index + 1).padStart(2, "0")}`);
   await pool.query(
     `INSERT INTO gcp_points (case_id, point_id, latitude, longitude, elevation, source_filename)
@@ -37,9 +34,49 @@ async function generateEstimatedGcps(caseId) {
   return pointIds;
 }
 
-// DJI Neo capture can proceed without surveyed GCPs. Once imagery and a valid
-// flight log exist, the case is reviewer-visible; estimated points are added
-// where an intake coordinate exists to support a clearly labelled demo scene.
+// Copies template.glb into uploads/cases/{caseId}/models/{caseId}.glb and upserts scene_models
+async function ensureSceneModelForCase(caseId) {
+  try {
+    const templateDir = path.join(__dirname, "../../template_model");
+    let templatePath = path.join(templateDir, "template.glb");
+
+    // Fallback in case the file is still named cube.glb
+    if (!fsSync.existsSync(templatePath)) {
+      const cubePath = path.join(templateDir, "cube.glb");
+      if (fsSync.existsSync(cubePath)) {
+        templatePath = cubePath;
+      }
+    }
+
+    const storageRoot = uploadConfig.LOCAL_ROOT || path.join(__dirname, "../../uploads");
+    const caseModelsDir = path.join(storageRoot, "cases", String(caseId), "models");
+    const destPath = path.join(caseModelsDir, `${caseId}.glb`);
+
+    await fs.mkdir(caseModelsDir, { recursive: true });
+    await fs.copyFile(templatePath, destPath);
+
+    const stats = await fs.stat(destPath);
+    const modelUrl = `http://localhost:5000/static/uploads/cases/${caseId}/models/${caseId}.glb`;
+
+    await pool.query(
+      `INSERT INTO scene_models (case_id, model_key, format, file_size_bytes)
+       VALUES ($1, $2, 'glb', $3)
+       ON CONFLICT (case_id)
+       DO UPDATE SET
+         model_key = EXCLUDED.model_key,
+         format = EXCLUDED.format,
+         file_size_bytes = EXCLUDED.file_size_bytes,
+         updated_at = NOW()`,
+      [caseId, modelUrl, stats.size],
+    );
+
+    return modelUrl;
+  } catch (error) {
+    console.error(`Failed to provision 3D model for case ${caseId}:`, error.message);
+    return null;
+  }
+}
+
 async function refreshCaptureStatus(caseId) {
   const { rows } = await pool.query(
     `SELECT
@@ -55,40 +92,18 @@ async function refreshCaptureStatus(caseId) {
   if (generatedGcpIds.length) artefacts = { ...artefacts, has_gcps: true };
   const status = ready ? "processed" : "processing";
 
-  let modelFilePath = null;
+  await pool.query(
+    `UPDATE cases
+     SET status = $1, updated_at = NOW()
+     WHERE id = $2 AND status NOT IN ('reviewed', 'failed')`,
+    [status, caseId],
+  );
 
   if (status === "processed") {
-    try {
-      const templatePath = path.join(__dirname, "../../template_model/template.glb");
-      const caseModelsDir = path.join(__dirname, `../../uploads/cases/${caseId}/models`);
-      const destPath = path.join(caseModelsDir, `${caseId}.glb`);
-
-      await fs.mkdir(caseModelsDir, { recursive: true });
-      await fs.copyFile(templatePath, destPath);
-
-      modelFilePath = `http://localhost:5000/static/uploads/cases/${caseId}/models/${caseId}.glb`;
-    } catch (error) {
-      console.error("Failed to copy model file:", error);
-    }
-  }
-
-  if (modelFilePath) {
-    await pool.query(
-      `UPDATE cases
-       SET status = $1, model_file_path = $2, updated_at = NOW()
-       WHERE id = $3 AND status NOT IN ('reviewed', 'failed')`,
-      [status, modelFilePath, caseId],
-    );
-  } else {
-    await pool.query(
-      `UPDATE cases
-       SET status = $1, updated_at = NOW()
-       WHERE id = $2 AND status NOT IN ('reviewed', 'failed')`,
-      [status, caseId],
-    );
+    await ensureSceneModelForCase(caseId);
   }
 
   return { status, ready, generatedEstimatedGcps: generatedGcpIds.length, ...artefacts };
 }
 
-module.exports = { refreshCaptureStatus };
+module.exports = { refreshCaptureStatus, ensureSceneModelForCase };
