@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Papa from 'papaparse';
 import { useUploadStore } from './useUploadStore';
 import { Table, Button, Upload, Alert, Card, Typography } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
-import { importGcpFile } from '../../../api/gcp';
+import { fetchGcps, importGcpFile } from '../../../api/gcp';
 import './GcpTableInput.css';
 
 const { Title } = Typography;
@@ -20,6 +20,20 @@ export default function GcpTableInput({ caseId }) {
     const [busy, setBusy] = useState(false);
 
     const reset = () => { setWarnings([]); setErrors([]); setMessage(''); };
+
+    // Resume a case with its persisted control points, rather than the empty
+    // client store left after a refresh or a return to the dashboard.
+    useEffect(() => {
+        let active = true;
+        fetchGcps(caseId)
+            .then((data) => {
+                if (!active) return;
+                setGcpData((data.points || []).map(toRow));
+                if (data.points?.length) setMessage(`${data.points.length} GCPs loaded from this case.`);
+            })
+            .catch(() => { if (active) setErrors([{ message: 'Could not load saved GCPs.' }]); });
+        return () => { active = false; };
+    }, [caseId, setGcpData]);
 
     // With a case: let the server parse (it knows every delimiter/encoding/Neo rule) and preview first.
     const previewOnServer = async (file) => {
@@ -77,7 +91,14 @@ export default function GcpTableInput({ caseId }) {
 
     return (
         <Card className="gcp-card">
-            <Title level={4}>Step B: Ground Control Points (GCPs)</Title>
+            <Title level={4}>Step B: Ground Control Points (Optional)</Title>
+            <Alert
+                className="gcp-alert"
+                type="info"
+                showIcon
+                message="Optional for DJI Neo processing"
+                description="You can import surveyed GCPs for improved accuracy. If none are supplied, the system creates estimated demo points around the saved case coordinates; they are not survey control points."
+            />
 
             <Upload beforeUpload={handleFileUpload} accept=".csv,.txt" showUploadList={false} disabled={busy}>
                 <Button icon={<UploadOutlined />} loading={busy}>Import GCPs (CSV / TXT)</Button>

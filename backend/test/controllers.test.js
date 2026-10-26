@@ -9,13 +9,39 @@ const JHB = { latitude: -26.2041, longitude: 28.0473 };
 const csv = (rows) => Buffer.from("id,lat,long,elevation\n" + rows.join("\n"));
 const eightPoints = Array.from({ length: 8 }, (_, i) => `GCP${i + 1},-26.20${40 + i},28.047${i},1752`);
 
+
 function db({ caseLoc = JHB } = {}) {
     stubs.resetCalls();
+
     stubs.setHandler((sql) => {
-        if (/FROM cases/.test(sql)) return { rows: caseLoc ? [caseLoc] : [], rowCount: caseLoc ? 1 : 0 };
+        // Simulate the capture-status query introduced by the
+        // integrated processing pipeline.
+        if (
+            /EXISTS\s*\(SELECT 1 FROM case_images/i.test(sql) &&
+            /EXISTS\s*\(SELECT 1 FROM flight_logs/i.test(sql)
+        ) {
+            return {
+                rows: [{
+                    has_images: false,
+                    has_gcps: true,
+                    has_flight_log: false
+                }],
+                rowCount: 1
+            };
+        }
+
+        // Existing case-location mock.
+        if (/FROM cases/.test(sql)) {
+            return {
+                rows: caseLoc ? [caseLoc] : [],
+                rowCount: caseLoc ? 1 : 0
+            };
+        }
+
         return { rows: [], rowCount: 0 };
     });
 }
+
 
 test("import: dry run parses, saves nothing, reports meta + count", async () => {
     db();

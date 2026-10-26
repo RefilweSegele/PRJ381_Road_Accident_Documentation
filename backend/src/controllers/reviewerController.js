@@ -14,15 +14,26 @@ exports.searchCases = async (req, res) => {
 exports.getCaseForReview = async (req, res) => {
     try {
         const { id } = req.params;
+
+        // Same integer check as requireCase: a non-numeric id would otherwise
+        // reach Postgres and come back as a 500.
+        if (!/^[1-9]\d*$/.test(id)) {
+            return res.status(400).json({ error: "Case id must be a positive integer" });
+        }
+
+        // Fixed: changed reviewerSearchService to reviewerService 
+        // Fixed: changed getReviewableCaseByID to getReviewableCaseById (lowercase d matches service)
         const caseData = await reviewerService.getReviewableCaseById(id);
 
         if (!caseData) {
             return res.status(404).json({ error: "Case not found" });
         }
 
-        //cases that have finished processing should be reviewable
+        // Only finished cases are reviewable. 409 tells the frontend "not yet", not "broken".
         if (!["processed", "reviewed"].includes(caseData.status)) {
-            return res.status(409).json({ error: `Case is not ready for review (status: ${caseData.status})`});
+            return res.status(409).json({
+                error: `Case is not ready for review (status: ${caseData.status})`,
+            });
         }
 
         return res.status(200).json(caseData);

@@ -2,6 +2,7 @@ const service = require("../services/flightLogService");
 const { validateFlightLog } = require("../utils/flightLogValidator");
 const { NEO } = require("../config/droneProfiles");
 const { AppError } = require("../middleware/errorHandler");
+const { refreshCaptureStatus } = require("../services/captureStatusService");
 
 const MAX_PG_INT = 2147483647;
 
@@ -27,7 +28,8 @@ async function create(req, res, next) {
     try {
         const { value, warnings } = validated(req.body);
         const log = await service.createFlightLog(req.caseId, value, warnings);
-        res.status(201).json({ flightLog: log, warnings });
+        const pipeline = await refreshCaptureStatus(req.caseId);
+        res.status(201).json({ flightLog: log, warnings, ...pipeline });
     } catch (error) { next(error); }
 }
 
@@ -55,7 +57,8 @@ async function update(req, res, next) {
         const { value, warnings } = validated(req.body);
         const log = await service.updateFlightLog(req.caseId, logId, value, warnings);
         if (!log) throw new AppError("Flight log not found", 404, "FLIGHT_LOG_NOT_FOUND");
-        res.json({ flightLog: log, warnings });
+        const pipeline = await refreshCaptureStatus(req.caseId);
+        res.json({ flightLog: log, warnings, ...pipeline });
     } catch (error) { next(error); }
 }
 
@@ -64,7 +67,8 @@ async function remove(req, res, next) {
     try {
         const deleted = await service.deleteFlightLog(req.caseId, logIdFrom(req));
         if (!deleted) throw new AppError("Flight log not found", 404, "FLIGHT_LOG_NOT_FOUND");
-        res.json({ deleted: true });
+        const pipeline = await refreshCaptureStatus(req.caseId);
+        res.json({ deleted: true, ...pipeline });
     } catch (error) { next(error); }
 }
 
