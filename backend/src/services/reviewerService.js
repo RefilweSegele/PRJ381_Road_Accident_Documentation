@@ -44,7 +44,7 @@ async function searchCases({ search, dateFrom, dateTo }) {
     }
     if (dateFrom) {
         params.push(dateFrom);
-        conditions.push(`incident_date::date <= $${params.length}::date`);
+        conditions.push(`incident_date::date >= $${params.length}::date`);
     }
     if (dateTo) {
         params.push(dateTo);

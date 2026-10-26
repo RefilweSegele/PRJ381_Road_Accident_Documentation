@@ -8,7 +8,7 @@ import React, { useMemo, useState } from "react";
 // TanStack Query for server state management (caching, loading states, refetching)
 import { useQuery } from "@tanstack/react-query";
 // Ant Design UI components for a polished, consistent layout
-import { Input, DatePicker, Select, Button, Tag, Table } from "antd";
+import { Input, DatePicker, Button, Tag, Table } from "antd";
 import { SearchOutlined, DownloadOutlined } from "@ant-design/icons";
 // React Router hook for programmatic navigation
 import { useNavigate } from "react-router-dom";
@@ -162,13 +162,7 @@ export default function SearchPortal() {
           style={{ width: 320 }}
         />
         <RangePicker value={dateRange} onChange={setDateRange} />
-        {/* Hardcoded to 'Complete' as this dashboard is for reviewing finished drone processing */}
-        <Select
-          value="Complete"
-          style={{ width: 160 }}
-          options={[{ value: "Complete", label: "Complete" }]}
-          disabled
-        />
+        <span>Showing processed and reviewed cases</span>
         <Button icon={<DownloadOutlined />} onClick={handleExportCsv}>
           Export CSV
         </Button>

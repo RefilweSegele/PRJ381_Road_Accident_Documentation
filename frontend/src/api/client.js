@@ -10,7 +10,7 @@ const apiClient = axios.create({
 
 // Attaches the stored auth token to every outgoing request
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem("authToken");
+  const token = localStorage.getItem("jwt_token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

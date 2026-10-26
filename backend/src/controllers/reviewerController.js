@@ -3,7 +3,7 @@ const reviewerService = require("../services/reviewerService");
 exports.searchCases = async (req, res) => {
     try {
         const { search, dateFrom, dateTo } = req.query;
-        const result = await reviewerSearchService.searchCases({ search, dateFrom, dateTo });
+        const result = await reviewerService.searchCases({ search, dateFrom, dateTo });
         return res.status(200).json(result);
     } catch (err) {
         console.error("searchCases error:", err);

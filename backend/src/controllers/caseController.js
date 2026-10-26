@@ -1,28 +1,4 @@
 const caseService = require("../services/caseService");
-const dbService = require("../services/dbService");
-
-async function searchCases(req, res, next) {
-  try {
-    const rows = await dbService.getCompleteCases({
-      search: req.query.search,
-      dateFrom: req.query.dateFrom,
-      dateTo: req.query.dateTo,
-    });
-
-    res.json({
-      cases: rows.map((row) => ({
-        id: row.id,
-        // Translate the schema's snake_case fields to the reviewer UI's camelCase keys.
-        caseId: row.case_reference,
-        location: row.incident_address,
-        incidentDate: row.incident_date,
-        status: row.status,
-      })),
-    });
-  } catch (err) {
-    next(err);
-  }
-}
 
 // GET /api/cases - list cases with filters/pagination/sorting.
 async function getCases(req, res, next) {
@@ -132,7 +108,6 @@ async function deleteCase(req, res, next) {
 }
 
 module.exports = {
-  searchCases,
   getCases,
   getStats,
   getCase,

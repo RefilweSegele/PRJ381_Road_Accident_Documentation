@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS cases (
   incident_date TIMESTAMPTZ NOT NULL,
   -- Constrained to the exact statuses the frontend's StatusTag component knows about.
   status TEXT NOT NULL DEFAULT 'draft'
-    CHECK (status IN ('draft', 'uploaded', 'processing', 'processed', 'reviewed', 'failed', 'Complete')),
+    CHECK (status IN ('draft', 'uploaded', 'processing', 'processed', 'reviewed', 'failed')),
   -- Plain text for now — becomes a proper FK to users(id) once
   -- auth/users table exists. Kept nullable and unconstrained so this
   -- migration doesn't depend on work landing first.
