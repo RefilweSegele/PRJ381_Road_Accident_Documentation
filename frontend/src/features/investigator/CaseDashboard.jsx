@@ -224,11 +224,9 @@ function CaseDashboard() {
             >
               Refresh
             </Button>
-            <Link to="/investigator/cases/new">
-              <Button type="primary" icon={<Plus size={14} />}>
-                New Case
-              </Button>
-            </Link>
+            <Button type="primary" icon={<Plus size={14} />} href="/investigator/cases/new">
+              New Case
+            </Button>
           </div>
         </div>
 

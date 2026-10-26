@@ -2,6 +2,7 @@ const gcpService = require("../services/gcpService");
 const { parseGcpText, parseGcpObjects, decodeGcpBuffer, checkGcpGeometry } = require("../utils/gcpParser");
 const { NEO } = require("../config/droneProfiles");
 const { AppError } = require("../middleware/errorHandler");
+const { refreshCaptureStatus } = require("../services/captureStatusService");
 
 function modeFrom(query) {
     const mode = query.mode === undefined ? "replace" : String(query.mode);
@@ -53,8 +54,9 @@ async function importGcps(req, res, next) {
         }
         const saved = await gcpService.savePoints(req.caseId, result.points,
             { mode, sourceFilename: req.file.originalname });
+        const pipeline = await refreshCaptureStatus(req.caseId);
         res.status(201).json({ caseId: req.caseId, mode, imported: result.points.length,
-            warnings: result.warnings, meta: result.meta, points: saved, ...summary(saved) });
+            warnings: result.warnings, meta: result.meta, points: saved, ...summary(saved), ...pipeline });
     } catch (error) { next(error); }
 }
 
@@ -67,8 +69,9 @@ async function saveGcps(req, res, next) {
         rejectIfInvalid(result);
         result.warnings = await withGeometryWarnings(req.caseId, result);
         const saved = await gcpService.savePoints(req.caseId, result.points, { mode });
+        const pipeline = await refreshCaptureStatus(req.caseId);
         res.status(201).json({ caseId: req.caseId, mode, imported: result.points.length,
-            warnings: result.warnings, points: saved, ...summary(saved) });
+            warnings: result.warnings, points: saved, ...summary(saved), ...pipeline });
     } catch (error) { next(error); }
 }
 
@@ -84,7 +87,8 @@ async function listGcps(req, res, next) {
 async function clearGcps(req, res, next) {
     try {
         const deleted = await gcpService.deletePoints(req.caseId);
-        res.json({ caseId: req.caseId, deleted });
+        const pipeline = await refreshCaptureStatus(req.caseId);
+        res.json({ caseId: req.caseId, deleted, ...pipeline });
     } catch (error) { next(error); }
 }
 

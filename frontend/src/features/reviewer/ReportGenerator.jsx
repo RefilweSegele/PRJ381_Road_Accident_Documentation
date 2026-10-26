@@ -1,100 +1,237 @@
-import React, { useMemo, useState } from "react";
+
+import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Alert,
   Button,
   Card,
   Col,
   Descriptions,
-  Divider,
   Empty,
+  Form,
   Input,
   List,
   Row,
+  Select,
   Space,
+  Spin,
   Statistic,
   Tag,
   Typography,
+  message,
 } from "antd";
 import {
-  CheckCircleOutlined,
   DownloadOutlined,
   FilePdfOutlined,
-  PrinterOutlined,
+  ReloadOutlined,
 } from "@ant-design/icons";
+import apiClient from "../../api/client";
 
 const { Title, Text } = Typography;
 
-/*
- * Member 9 - Page 7: Final forensic PDF assembly
- *
- * This first frontend version is intentionally API-independent.
- * Replace the demo `reportData` with data returned by the backend/other
- * reviewer components when those integrations are ready.
- */
+const dateText = (value) =>
+  value ? new Date(value).toLocaleString() : "Not recorded";
 
-const demoReport = {
-  caseNumber: "RA-2026-00124",
-  status: "Ready for assembly",
-  generatedAt: "16 September 2026",
-  investigator: "Demo Investigator",
-  incidentDate: "14 September 2026",
-  location: "Pretoria, Gauteng",
-  vehicleCount: 2,
-  executiveSummary:
-    "Preliminary digital reconstruction and inspection findings are available for reviewer confirmation.",
-  measurements: [
-    { label: "Vehicle A impact width", value: "1.82 m" },
-    { label: "Vehicle B final position", value: "4.37 m" },
-    { label: "Debris field length", value: "8.14 m" },
-  ],
-  findings: [
-    "Scene imagery has been uploaded and processed.",
-    "3D inspection measurements are available for inclusion.",
-    "ML damage/debris annotations are available for reviewer confirmation.",
-  ],
-  evidence: [
-    { name: "Scene overview", description: "Primary accident-scene image" },
-    { name: "Vehicle damage", description: "Damage inspection evidence" },
-    { name: "3D measurements", description: "Reviewer measurement summary" },
-  ],
-};
+const errorText = (error) =>
+  error?.response?.data?.error ||
+  error?.response?.data?.message ||
+  error?.message ||
+  "Request failed";
 
-function Section({ title, children }) {
-  return (
-    <Card
-      title={title}
-      style={{ marginBottom: 16 }}
-      className="report-section"
-    >
-      {children}
-    </Card>
-  );
-}
+export default function ReportGenerator() {
+  const [searchParams, setSearchParams] = useSearchParams();
 
-export default function ReportGenerator({ reportData = demoReport }) {
-  const [preparedBy, setPreparedBy] = useState(reportData.investigator || "");
-  const [notes, setNotes] = useState("");
-  const [includedEvidence, setIncludedEvidence] = useState(
-    reportData.evidence?.map((item) => item.name) || []
-  );
+  const requestedCaseId = searchParams.get("caseId");
 
-  const allEvidenceSelected = useMemo(
-    () =>
-      (reportData.evidence?.length || 0) > 0 &&
-      includedEvidence.length === reportData.evidence.length,
-    [includedEvidence, reportData.evidence]
-  );
+  const [cases, setCases] = useState([]);
+  const [caseId, setCaseId] = useState(() => {
+    const id = Number(requestedCaseId);
+    return requestedCaseId && Number.isSafeInteger(id) && id > 0
+      ? id
+      : null;
+  });
 
-  const toggleEvidence = (name) => {
-    setIncludedEvidence((current) =>
-      current.includes(name)
-        ? current.filter((item) => item !== name)
-        : [...current, name]
-    );
+  const [caseDetails, setCaseDetails] = useState(null);
+  const [reports, setReports] = useState([]);
+  const [loadingCases, setLoadingCases] = useState(false);
+  const [loadingCase, setLoadingCase] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [downloadingId, setDownloadingId] = useState(null);
+
+  const [form] = Form.useForm();
+
+  useEffect(() => {
+    let active = true;
+
+    const loadCases = async () => {
+      setLoadingCases(true);
+
+      try {
+        const { data } = await apiClient.get("/cases", {
+          params: { pageSize: 1000 },
+        });
+
+        const rows = Array.isArray(data)
+          ? data
+          : data.data || data.cases || [];
+
+        if (!active) return;
+
+        setCases(rows);
+
+        if (rows.length) {
+          setCaseId((previous) => previous ?? rows[0].id);
+        }
+      } catch (error) {
+        if (active) {
+          message.error(
+            `Could not load cases: ${errorText(error)}`
+          );
+        }
+      } finally {
+        if (active) setLoadingCases(false);
+      }
+    };
+
+    loadCases();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const id = Number(requestedCaseId);
+
+    if (
+      requestedCaseId &&
+      Number.isSafeInteger(id) &&
+      id > 0
+    ) {
+      setCaseId(id);
+    }
+  }, [requestedCaseId]);
+
+  const handleCaseChange = (selectedId) => {
+    setCaseId(selectedId);
+
+    setSearchParams({
+      caseId: String(selectedId),
+    });
   };
 
-  const handlePrint = () => {
-    window.print();
+  const refreshCase = async (id) => {
+    if (!id) return;
+
+    setLoadingCase(true);
+
+    try {
+      const [caseResult, reportsResult] = await Promise.all([
+        apiClient.get(`/cases/${id}`),
+        apiClient.get(`/cases/${id}/reports`),
+      ]);
+
+      setCaseDetails(
+        caseResult.data.case || caseResult.data
+      );
+
+      setReports(reportsResult.data.reports || []);
+    } catch (error) {
+      message.error(
+        `Could not load case or reports: ${errorText(error)}`
+      );
+    } finally {
+      setLoadingCase(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!caseId) {
+      setCaseDetails(null);
+      setReports([]);
+      return;
+    }
+
+    setCaseDetails(null);
+    setReports([]);
+    form.resetFields();
+
+    refreshCase(caseId);
+  }, [caseId]);
+
+  const generateReport = async (values) => {
+    if (!caseId) return;
+
+    setGenerating(true);
+
+    try {
+      const { data } = await apiClient.post(
+        `/cases/${caseId}/reports`,
+        {
+          title:
+            values.title?.trim() ||
+            "Forensic Road Accident Report",
+          executiveSummary:
+            values.executiveSummary || "",
+          reviewerNotes:
+            values.reviewerNotes || "",
+          measurements: [],
+          findings: [],
+        }
+      );
+
+      message.success(
+        `Report ${data.report?.id || ""} generated and saved`
+      );
+
+      await refreshCase(caseId);
+    } catch (error) {
+      message.error(
+        `Report generation failed: ${errorText(error)}`
+      );
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const downloadPdf = async (report) => {
+    setDownloadingId(report.id);
+
+    try {
+      const { data } = await apiClient.get(
+        `/reports/${report.id}/pdf`,
+        {
+          responseType: "blob",
+        }
+      );
+
+      const url = URL.createObjectURL(
+        new Blob([data], {
+          type: "application/pdf",
+        })
+      );
+
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = `${
+        caseDetails?.caseReference || "DAIAS"
+      }-report-${report.id}.pdf`;
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 30000);
+    } catch (error) {
+      message.error(
+        `PDF download failed: ${errorText(error)}`
+      );
+    } finally {
+      setDownloadingId(null);
+    }
   };
 
   return (
@@ -103,211 +240,263 @@ export default function ReportGenerator({ reportData = demoReport }) {
         maxWidth: 1200,
         margin: "0 auto",
         padding: 24,
-        background: "#f5f5f5",
         minHeight: "100vh",
+        background: "#f5f5f5",
       }}
     >
-      <style>{`
-        @media print {
-          .no-print { display: none !important; }
-          body { background: white !important; }
-          .report-page {
-            max-width: none !important;
-            padding: 0 !important;
-            background: white !important;
-          }
-          .report-section {
-            break-inside: avoid;
-            box-shadow: none !important;
-          }
-        }
-      `}</style>
+      <Title level={2}>
+        <FilePdfOutlined /> Forensic Report Generator
+      </Title>
 
-      <div className="no-print" style={{ marginBottom: 20 }}>
-        <Space direction="vertical" size={4}>
-          <Title level={2} style={{ margin: 0 }}>
-            <FilePdfOutlined /> Forensic Report Generator
-          </Title>
-          <Text type="secondary">
-            Page 7 — assemble and review the final forensic report before PDF
-            output.
-          </Text>
+      <Text type="secondary">
+        Generate, review, and download reports saved
+        in the DAIAS database.
+      </Text>
+
+      <Card
+        title="Select accident case"
+        style={{
+          marginTop: 20,
+          marginBottom: 16,
+        }}
+      >
+        <Space wrap style={{ width: "100%" }}>
+          <Select
+            showSearch
+            optionFilterProp="label"
+            loading={loadingCases}
+            style={{ minWidth: 320 }}
+            placeholder="Select a case"
+            value={caseId}
+            onChange={handleCaseChange}
+            options={cases.map((item) => ({
+              value: item.id,
+              label: `${
+                item.caseReference || `Case ${item.id}`
+              } — ${
+                item.incidentAddress || "No address"
+              }`,
+            }))}
+          />
+
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={() => refreshCase(caseId)}
+            disabled={!caseId}
+          >
+            Refresh
+          </Button>
         </Space>
-      </div>
 
-      <Row gutter={[16, 16]} className="no-print">
-        <Col xs={24} md={8}>
-          <Card>
-            <Statistic title="Case" value={reportData.caseNumber} />
-          </Card>
-        </Col>
-        <Col xs={24} md={8}>
-          <Card>
-            <Statistic title="Evidence items" value={includedEvidence.length} />
-          </Card>
-        </Col>
-        <Col xs={24} md={8}>
-          <Card>
-            <Statistic title="Vehicles" value={reportData.vehicleCount} />
-          </Card>
-        </Col>
-      </Row>
+        {!loadingCases && cases.length === 0 && (
+          <Alert
+            style={{ marginTop: 12 }}
+            type="info"
+            message="No cases found. Create a case before generating a report."
+          />
+        )}
+      </Card>
 
-      <Card className="report-page" style={{ marginTop: 16 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 16 }}>
-          <div>
-            <Title level={1} style={{ marginBottom: 4 }}>
-              Forensic Road Accident Report
-            </Title>
-            <Text type="secondary">Case {reportData.caseNumber}</Text>
-          </div>
+      {loadingCase && (
+        <div
+          style={{
+            textAlign: "center",
+            padding: 24,
+          }}
+        >
+          <Spin />
+        </div>
+      )}
 
-          <div className="no-print">
-            <Space wrap>
-              <Button icon={<PrinterOutlined />} onClick={handlePrint}>
-                Print / Save as PDF
-              </Button>
+      {!loadingCase && caseDetails && (
+        <>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} md={8}>
+              <Card>
+                <Statistic
+                  title="Case"
+                  value={
+                    caseDetails.caseReference ||
+                    caseDetails.id
+                  }
+                />
+              </Card>
+            </Col>
+
+            <Col xs={24} md={8}>
+              <Card>
+                <Statistic
+                  title="Existing reports"
+                  value={reports.length}
+                />
+              </Card>
+            </Col>
+
+            <Col xs={24} md={8}>
+              <Card>
+                <Statistic
+                  title="Vehicles"
+                  value={
+                    caseDetails.vehicleCount ?? 0
+                  }
+                />
+              </Card>
+            </Col>
+          </Row>
+
+          <Card
+            title="Case information"
+            style={{ marginTop: 16 }}
+          >
+            <Descriptions
+              bordered
+              column={{ xs: 1, sm: 2 }}
+            >
+              <Descriptions.Item label="Case reference">
+                {caseDetails.caseReference ||
+                  caseDetails.id}
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Status">
+                <Tag>
+                  {caseDetails.status || "Unknown"}
+                </Tag>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Incident date">
+                {dateText(caseDetails.incidentDate)}
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Location">
+                {caseDetails.incidentAddress ||
+                  "Not recorded"}
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Investigator">
+                {caseDetails.assignedInvestigator ||
+                  "Not assigned"}
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Created">
+                {dateText(caseDetails.createdAt)}
+              </Descriptions.Item>
+            </Descriptions>
+          </Card>
+
+          <Card
+            title="Prepare forensic report"
+            style={{ marginTop: 16 }}
+          >
+            <Alert
+              type="info"
+              showIcon
+              style={{ marginBottom: 16 }}
+              message="Only verified case data is included automatically. Do not invent measurements, findings, or evidence."
+            />
+
+            <Form
+              form={form}
+              layout="vertical"
+              onFinish={generateReport}
+              initialValues={{
+                title: "Forensic Road Accident Report",
+              }}
+            >
+              <Form.Item
+                name="title"
+                label="Report title"
+                rules={[
+                  {
+                    required: true,
+                    message:
+                      "Please enter a report title",
+                  },
+                ]}
+              >
+                <Input
+                  placeholder="Enter report title"
+                  maxLength={200}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="executiveSummary"
+                label="Executive summary"
+              >
+                <Input.TextArea
+                  rows={4}
+                  placeholder="Summarize the documented accident case"
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="reviewerNotes"
+                label="Reviewer notes"
+              >
+                <Input.TextArea
+                  rows={4}
+                  placeholder="Add reviewer observations"
+                />
+              </Form.Item>
+
               <Button
                 type="primary"
-                icon={<DownloadOutlined />}
-                onClick={handlePrint}
+                htmlType="submit"
+                loading={generating}
+                icon={<FilePdfOutlined />}
               >
-                Generate PDF
+                Generate and save report
               </Button>
-            </Space>
-          </div>
-        </div>
+            </Form>
+          </Card>
 
-        <Divider />
-
-        <Section title="Case Information">
-          <Descriptions bordered column={{ xs: 1, sm: 2 }}>
-            <Descriptions.Item label="Case number">
-              {reportData.caseNumber}
-            </Descriptions.Item>
-            <Descriptions.Item label="Status">
-              <Tag icon={<CheckCircleOutlined />} color="green">
-                {reportData.status}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="Incident date">
-              {reportData.incidentDate}
-            </Descriptions.Item>
-            <Descriptions.Item label="Location">
-              {reportData.location}
-            </Descriptions.Item>
-            <Descriptions.Item label="Investigator">
-              {reportData.investigator}
-            </Descriptions.Item>
-            <Descriptions.Item label="Report date">
-              {reportData.generatedAt}
-            </Descriptions.Item>
-          </Descriptions>
-        </Section>
-
-        <Section title="Executive Summary">
-          <Text>{reportData.executiveSummary}</Text>
-        </Section>
-
-        <Section title="Measurements">
-          <List
-            bordered
-            dataSource={reportData.measurements || []}
-            locale={{ emptyText: <Empty description="No measurements available" /> }}
-            renderItem={(item) => (
-              <List.Item>
-                <Text>{item.label}</Text>
-                <Text strong>{item.value}</Text>
-              </List.Item>
-            )}
-          />
-        </Section>
-
-        <Section title="Findings">
-          <List
-            bordered
-            dataSource={reportData.findings || []}
-            renderItem={(item, index) => (
-              <List.Item>
-                <Text>
-                  {index + 1}. {item}
-                </Text>
-              </List.Item>
-            )}
-          />
-        </Section>
-
-        <Section title="Evidence Included">
-          <Alert
-            className="no-print"
-            type={allEvidenceSelected ? "success" : "info"}
-            showIcon
-            message={
-              allEvidenceSelected
-                ? "All available evidence is selected."
-                : "Select the evidence items that should appear in the final report."
-            }
-            style={{ marginBottom: 12 }}
-          />
-
-          <List
-            bordered
-            dataSource={reportData.evidence || []}
-            renderItem={(item) => {
-              const selected = includedEvidence.includes(item.name);
-              return (
+          <Card
+            title="Saved reports"
+            style={{ marginTop: 16 }}
+          >
+            <List
+              locale={{
+                emptyText: (
+                  <Empty description="No reports generated for this case" />
+                ),
+              }}
+              dataSource={reports}
+              renderItem={(report) => (
                 <List.Item
                   actions={[
                     <Button
-                      key={item.name}
-                      className="no-print"
-                      type={selected ? "primary" : "default"}
-                      onClick={() => toggleEvidence(item.name)}
+                      key="download"
+                      icon={<DownloadOutlined />}
+                      loading={
+                        downloadingId === report.id
+                      }
+                      onClick={() =>
+                        downloadPdf(report)
+                      }
                     >
-                      {selected ? "Included" : "Include"}
+                      Download PDF
                     </Button>,
                   ]}
                 >
                   <List.Item.Meta
-                    title={item.name}
-                    description={item.description}
+                    title={`${
+                      report.title ||
+                      "Forensic Road Accident Report"
+                    } #${report.id}`}
+                    description={`Created ${dateText(
+                      report.created_at
+                    )}${
+                      report.generated_by
+                        ? ` · By ${report.generated_by}`
+                        : ""
+                    }`}
                   />
                 </List.Item>
-              );
-            }}
-          />
-        </Section>
-
-        <Section title="Reviewer Notes">
-          <Input.TextArea
-            className="no-print"
-            rows={4}
-            value={notes}
-            onChange={(event) => setNotes(event.target.value)}
-            placeholder="Add final reviewer notes before exporting..."
-          />
-          <div style={{ marginTop: 12, whiteSpace: "pre-wrap" }}>
-            {notes || "No additional reviewer notes."}
-          </div>
-        </Section>
-
-        <Divider />
-
-        <div style={{ textAlign: "center" }}>
-          <Text type="secondary">
-            Prepared by: {preparedBy || "Not specified"} · Generated:{" "}
-            {reportData.generatedAt}
-          </Text>
-        </div>
-
-        <div className="no-print" style={{ marginTop: 16 }}>
-          <Input
-            addonBefore="Prepared by"
-            value={preparedBy}
-            onChange={(event) => setPreparedBy(event.target.value)}
-          />
-        </div>
-      </Card>
+              )}
+            />
+          </Card>
+        </>
+      )}
     </div>
   );
 }

@@ -1,35 +1,62 @@
-const express = require('express');
-const jwt = require('jsonwebtoken');
-const { login } = require('../controllers/authController');
+
+const express = require("express");
+const jwt = require("jsonwebtoken");
+const { login, register } = require("../controllers/authController");
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'daias_super_secret_key';
 
-// POST /api/auth/login
-router.post('/login', login);
+// Authentication endpoints
+router.post("/login", login);
+router.post("/register", register);
 
-// 1. JWT Authentication Middleware
+// Verify JWT before allowing access to protected routes
 const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+    return res.status(503).json({
+      error: "JWT_SECRET is not configured"
+    });
+  }
 
-  if (!token) return res.status(401).json({ error: 'Access token missing' });
+  const match = /^Bearer\s+(.+)$/i.exec(
+    req.headers.authorization || ""
+  );
 
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ error: 'Invalid or expired token' });
-    req.user = user;
-    next();
-  });
-};
+  if (!match) {
+    return res.status(401).json({
+      error: "Access token missing"
+    });
+  }
 
-// 2. RBAC Middleware Builder
-const authorizeRoles = (...allowedRoles) => {
-  return (req, res, next) => {
-    if (!req.user || !allowedRoles.includes(req.user.role)) {
-      return res.status(403).json({ error: 'Forbidden: Insufficient permissions' });
+  jwt.verify(
+    match[1],
+    process.env.JWT_SECRET,
+    { algorithms: ["HS256"] },
+    (err, user) => {
+      if (err) {
+        return res.status(403).json({
+          error: "Invalid or expired token"
+        });
+      }
+
+      req.user = user;
+      next();
     }
-    next();
-  };
+  );
 };
 
-module.exports = { router, authenticateToken, authorizeRoles };
+// Restrict protected routes by role
+const authorizeRoles = (...allowedRoles) => (req, res, next) => {
+  if (!req.user || !allowedRoles.includes(req.user.role)) {
+    return res.status(403).json({
+      error: "Forbidden: Insufficient permissions"
+    });
+  }
+
+  next();
+};
+
+module.exports = {
+  router,
+  authenticateToken,
+  authorizeRoles
+};
