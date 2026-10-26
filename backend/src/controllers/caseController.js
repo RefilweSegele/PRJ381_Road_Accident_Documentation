@@ -1,6 +1,6 @@
 const caseService = require("../services/caseService");
 
-// GET /api/cases - list cases with filters/pagination/sorting.
+// GET /api/cases — list cases with filters/pagination/sorting.
 async function getCases(req, res, next) {
   try {
     const { status, search, page, pageSize, sortField, sortOrder } = req.query;
@@ -31,7 +31,7 @@ async function getCases(req, res, next) {
   }
 }
 
-// GET /api/cases/stats - aggregate counts for the dashboard stat cards.
+// GET /api/cases/stats — aggregate counts for the dashboard stat cards.
 async function getStats(req, res, next) {
   try {
     const stats = await caseService.getCaseStats();
@@ -41,7 +41,7 @@ async function getStats(req, res, next) {
   }
 }
 
-// GET /api/cases/:id - fetch a single case.
+// GET /api/cases/:id — fetch a single case.
 async function getCase(req, res, next) {
   try {
     const caseRecord = await caseService.getCaseById(req.params.id);
@@ -54,13 +54,13 @@ async function getCase(req, res, next) {
   }
 }
 
-// POST /api/cases - create a new case.
+// POST /api/cases — create a new case.
 async function createCase(req, res, next) {
   try {
     const { incidentAddress, incidentDate, location, assignedInvestigator } =
       req.body;
 
-    // Minimal required-field validation - expand as the schema grows.
+    // Minimal required-field validation — expand as the schema grows.
     if (!incidentAddress || !incidentDate) {
       return res
         .status(400)
@@ -81,7 +81,7 @@ async function createCase(req, res, next) {
   }
 }
 
-// PATCH /api/cases/:id - update fields on an existing case.
+// PATCH /api/cases/:id — update fields on an existing case.
 async function updateCase(req, res, next) {
   try {
     const updated = await caseService.updateCase(req.params.id, req.body);
@@ -94,7 +94,7 @@ async function updateCase(req, res, next) {
   }
 }
 
-// DELETE /api/cases/:id - remove a case.
+// DELETE /api/cases/:id — remove a case.
 async function deleteCase(req, res, next) {
   try {
     const deleted = await caseService.deleteCase(req.params.id);
