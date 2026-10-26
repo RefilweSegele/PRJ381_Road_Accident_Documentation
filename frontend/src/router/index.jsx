@@ -30,6 +30,7 @@ export default function AppRoutes() {
         <Route path="cases/new" element={<CaseIntakeForm />} />
         <Route path="cases/:id/upload" element={<UploadWizard />} />
         <Route path="cases/:id/status" element={<CaseStatusPage />} />
+        <Route path="cases/:id/viewer" element={<CaseDetailPage />} />
       </Route>
 
       {/* Reviewer (insurer + law enforcement) */}

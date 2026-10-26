@@ -22,7 +22,8 @@ const { uploadErrorHandler } = require("./src/middleware/errorHandler");
 
 // Unofficial car-damage detection test endpoint (POST /api/damage/analyze)
 const damageRoutes = require("./src/routes/damage.routes");
-
+const processingRoutes = require("./src/routes/processing.routes");
+const { resumeInterruptedJobs } = require("./src/services/processingService");
 
 const app = express();
 const JWT_SECRET = process.env.JWT_SECRET || 'daias_super_secret_key';
@@ -63,7 +64,11 @@ app.get("/api/uploads/*storagePath", async (req, res) => {
       // Only keys registered as evidence records may be streamed. This keeps
       // arbitrary files beneath LOCAL_ROOT out of reach even for a valid JWT.
       const { rowCount } = await pool.query(
-        "SELECT 1 FROM case_images WHERE storage_key = $1", [storageKey],
+        `SELECT 1 FROM case_images WHERE storage_key = $1
+         UNION ALL
+         SELECT 1 FROM scene_models WHERE model_key = $1
+         LIMIT 1`,
+        [storageKey],
       );
       if (rowCount === 0) return res.status(404).json({ error: "Image not found" });
 
@@ -97,6 +102,9 @@ app.use("/api/cases", gcpRoutes);
 
 // Flight notes (POST|GET /api/cases/:id/flight-logs, GET|PUT|DELETE .../:logId)
 app.use("/api/cases", flightLogRoutes);
+// 3D reconstruction (WebODM) pipeline
+app.use("/api/cases", processingRoutes.caseRouter);
+app.use("/api/webodm", processingRoutes.webodmRouter);
 
 // Neo hardware limits the validators enforce (read-only, for the frontend form)
 app.get("/api/drone-profile", droneProfile);
@@ -120,4 +128,6 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  // pick up WebODM jobs that were running when the server last stopped
+  resumeInterruptedJobs().catch((e) => console.error("Could not resume jobs:", e));
 });

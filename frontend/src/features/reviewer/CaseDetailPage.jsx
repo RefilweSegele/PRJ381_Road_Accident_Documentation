@@ -1,49 +1,31 @@
-import React, {useState} from "react";
-import {useParams} from "react-router-dom";
-import ThreeCanvas from "./Viewer3D/ThreeCanvas";
-import UIOverlays from "./Viewer3D/UIOverlays";
+import React from "react";
+import { useLocation, useParams } from "react-router-dom";
 import { useReviewCase } from "../../api/reviewer";
+import ViewerWorkspace from "./Viewer3D/ViewerWorkspace";
 
-function Message ({ children }) {
-    return <div style={{ padding : "40px", textAlign: "center" }}>{children}</div>;
+function Message({ children }) {
+  return <div style={{ padding: 40, textAlign: "center" }}>{children}</div>;
 }
 
+// Used by reviewers (/review/cases/:id) AND investigators (/investigator/cases/:id/viewer).
 export default function CaseDetailPage() {
-    const {id} = useParams();
-    const [measurementDistance, setMeasurementDistance] = useState(null);
-    const { data: caseData, isLoading, error } = useReviewCase(id);
+  const { id } = useParams();
+  const { pathname } = useLocation();
+  const { data: caseData, isLoading, error } = useReviewCase(id);
+  const isInvestigator = pathname.startsWith("/investigator");
 
-    if (isLoading) return <Message>Loading case...</Message>;
+  if (isLoading) return <Message>Loading case...</Message>;
+  if (error) {
+    if (error.status === 404) return <Message>Case {id} was not found</Message>;
+    if (error.status === 409) return <Message>{error.message}</Message>;
+    return <Message>Could not load the case. Please try again.</Message>;
+  }
 
-    if (error) {
-        if (error.status === 404) return <Message>Case {id} was not found</Message>;
-        if (error.status === 409) return <Message>{error.message}</Message>;
-        return <Message>Could not load the case. Please try again.</Message>
-    }
-
-    return (
-        <div style={{ position: "relative" }}>
-            <h1 style={{ margin: "12px"}}>Case {caseData.caseReference} - 3D Viewer</h1>
-
-            {caseData.scaleFactor == null && (
-                <p style={{ margin: "0 12px", color: "var(--dd-text-muted)"}}>
-                    Measurements are unscaled until calibration data is available
-                </p>
-            )}
-
-            {caseData.modelUrl ? (
-                <ThreeCanvas
-                    modelUrl={caseData.modelUrl}
-                    onMeasurementChange={setMeasurementDistance}
-                />
-            ) : (
-                <Message>No 3D model is available for this case yet.</Message>
-            )}
-
-            <UIOverlays
-                measurementDistance={measurementDistance}
-                damageBoxes={caseData.damageBoxes}
-            />
-        </div>
-    );
+  return (
+    <ViewerWorkspace
+      caseData={caseData}
+      backPath={isInvestigator ? `/investigator/cases/${id}/status` : "/review/cases"}
+      reportPath={isInvestigator ? null : `/review/cases/${id}/report`}
+    />
+  );
 }
