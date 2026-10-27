@@ -1,0 +1,49 @@
+.dv-root { display: flex; gap: 12px; padding: 12px; background: #0b1623; color: #e6edf5; min-height: calc(100vh - 64px); }
+.dv-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.dv-header { display: grid; grid-template-columns: 90px 1fr 140px; align-items: center; background: #101f33; border-radius: 8px; padding: 8px 12px; }
+.dv-header h2 { margin: 0; text-align: center; font-size: 17px; color: #e6edf5; }
+.dv-banner { background: #5b4310; color: #fde68a; padding: 6px 12px; border-radius: 6px; font-size: 13px; }
+.dv-stage { position: relative; flex: 1; min-height: 520px; height: calc(100vh - 150px); background: #000; border-radius: 8px; overflow: hidden; }
+.dv-canvas { position: absolute; inset: 0; }
+.dv-canvas.is-measuring canvas { cursor: crosshair; }
+.dv-overlay-msg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #cbd5e1; z-index: 3; pointer-events: none; }
+.dv-error { color: #f87171; }
+
+.dv-toolbar { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 10; display: flex; gap: 2px; background: rgba(16,31,51,.94); border: 1px solid #1f3552; border-radius: 8px; padding: 4px; }
+.dv-tool-group { display: flex; gap: 2px; padding: 0 4px; border-right: 1px solid #1f3552; }
+.dv-tool-group:last-child { border-right: 0; }
+.dv-tool { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 54px; padding: 5px 6px; background: transparent; color: #cbd5e1; border: 0; border-radius: 6px; cursor: pointer; font-size: 11px; }
+.dv-tool .anticon { font-size: 16px; }
+.dv-tool:hover { background: #1b3050; }
+.dv-tool.active { background: #1e3a5f; color: #fff; }
+
+.dv-popover { position: absolute; top: 78px; left: 50%; transform: translateX(-50%); z-index: 11; width: 330px; max-height: 70%; overflow: auto; background: rgba(16,31,51,.97); border: 1px solid #1f3552; border-radius: 8px; padding: 12px; font-size: 13px; }
+.dv-popover h4, .dv-popover h5 { margin: 0 0 8px; color: #fff; }
+.dv-popover h5 { margin-top: 14px; font-size: 13px; }
+.dv-field { display: block; margin: 8px 0; }
+.dv-field input[type=range] { width: 100%; }
+.dv-check { display: flex; align-items: center; gap: 6px; margin: 4px 0; text-transform: capitalize; }
+.dv-check i, .dv-det-list i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
+.dv-det-list { display: flex; flex-direction: column; gap: 3px; margin-top: 6px; }
+.dv-det-list button { display: flex; align-items: center; gap: 6px; text-align: left; background: #14263d; color: #dbe7f5; border: 0; border-radius: 4px; padding: 4px 8px; cursor: pointer; }
+.dv-det-list button:hover { background: #1e3a5f; }
+.dv-popover a { color: #7cc0ff; cursor: pointer; }
+
+.dv-det-layer { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+.dv-det-layer svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.dv-det-label { position: absolute; transform: translateY(-100%); color: #fff; font-size: 12px; padding: 1px 6px; border-radius: 3px; white-space: nowrap; }
+.dv-meas-label { background: rgba(0,0,0,.78); color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 13px; white-space: nowrap; border: 1px solid rgba(255,255,255,.25); }
+
+.dv-hint { position: absolute; bottom: 52px; left: 50%; transform: translateX(-50%); z-index: 8; background: rgba(0,0,0,.65); padding: 4px 12px; border-radius: 6px; font-size: 12px; pointer-events: none; }
+.dv-measbar { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); z-index: 9; display: flex; gap: 6px; align-items: center; background: rgba(16,31,51,.94); padding: 5px 8px; border-radius: 8px; }
+.dv-gcp-badge { position: absolute; bottom: 12px; left: 12px; z-index: 9; background: rgba(16,31,51,.94); border: 1px solid #1f3552; padding: 6px 10px; border-radius: 6px; font-size: 13px; }
+
+.dv-side { width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; }
+.dv-card { background: #101f33; border: 1px solid #1a2f4a; border-radius: 8px; padding: 12px 14px; }
+.dv-card h4 { margin: 0 0 8px; color: #fff; font-size: 15px; }
+.dv-row { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; font-size: 13px; }
+.dv-row span { color: #9fb3c8; }
+.dv-muted { color: #8aa0b8; font-size: 12px; }
+.dv-gcp-list { max-height: 260px; overflow: auto; }
+.dv-gcp { font-size: 12px; padding: 3px 0; font-variant-numeric: tabular-nums; }
+@media (max-width: 1000px) { .dv-root { flex-direction: column; } .dv-side { width: auto; } }
