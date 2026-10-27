@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   FilePlus2,
@@ -99,6 +99,7 @@ export default function AppLayout() {
   };
 
   return (
+ redesigning_demo
     <div className={`shell ${collapsed ? "shell--collapsed" : ""}`}>
       {mobileOpen && <div className="shell__scrim" onClick={() => setMobileOpen(false)} />}
 
@@ -184,5 +185,34 @@ export default function AppLayout() {
         </main>
       </div>
     </div>
+
+    <Layout style={{ minHeight: "100vh" }}>
+      <Header
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          background: "#001529",
+          padding: "0 24px",
+        }}
+      >
+        <Typography.Text strong style={{ color: "#fff" }}>
+          DAIAS Portal
+        </Typography.Text>
+        <Space>
+            <Link to="/damage-test" style={{ color: "rgba(255,255,255,0.75)" }}> 
+            Damage Test
+            </Link>
+          {role && <Tag>{ROLE_LABELS[role] || role}</Tag>}
+          <Button icon={<LogoutOutlined />} onClick={handleLogout}>
+            Log out
+          </Button>
+        </Space>
+      </Header>
+      <Content style={{ background: "#f0f2f5" }}>
+        <Outlet />
+      </Content>
+    </Layout>
+ main
   );
 }

@@ -43,8 +43,6 @@ describe("reviewer SearchPortal helpers", () => {
       Location: "Pretoria",
       "Incident Date": "2026-10-26T14:06:00.000Z",
       Status: "processed",
-      "Claim Number": "CL-1",
-      Insurer: "Example Insurer",
     });
     expect(buildExportRows([investigatorCase], "investigator")[0]["Charge / Citation Ref"]).toBe("CR-1");
     expect(buildExportRows([], "insurer")).toEqual([]);

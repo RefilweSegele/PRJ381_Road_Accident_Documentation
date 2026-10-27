@@ -1,4 +1,3 @@
-
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import LoginPage from "../features/auth/LoginPage";
@@ -15,6 +14,8 @@ import CaseDetailPage from "../features/reviewer/CaseDetailPage";
 import ReportGenerator from "../features/reviewer/ReportGenerator";
 
 import AdminConsole from "../features/admin/AdminConsole";
+import UserPipelineMgmt from "../features/admin/UserPipelineMgmt";
+import DamageTestPage from "../features/investigator/damage/damageTestPage"; //for the damage test page
 
 export default function AppRoutes() {
   return (
@@ -33,6 +34,7 @@ export default function AppRoutes() {
         <Route path="cases/new" element={<CaseIntakeForm />} />
         <Route path="cases/:id/upload" element={<UploadWizard />} />
         <Route path="cases/:id/status" element={<CaseStatusPage />} />
+        <Route path="cases/:id/viewer" element={<CaseDetailPage />} />
       </Route>
 
       {/* Reviewer routes */}
@@ -84,7 +86,15 @@ export default function AppRoutes() {
         <Route index element={<UploadWizard />} />
       </Route>
 
-      {/* Fallback routes */}
+     {/* Unofficial damage-detection test page (any signed-in role) */}
+      <Route
+        path="/damage-test"
+        element={<RequireAuth roles={["investigator", "insurer", "law_enforcement", "admin"]} />}
+      >
+        <Route index element={<DamageTestPage />} />
+      </Route>
+
+      {/* Fallbacks */}
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>

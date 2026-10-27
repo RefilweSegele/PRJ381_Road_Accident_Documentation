@@ -9,9 +9,16 @@ exports.createForCase = async (req, res, next) => {
   try {
     const caseId = positiveInteger(req.params.caseId);
     if (!caseId) return res.status(400).json({ error: "caseId must be a positive integer" });
+    
+    // Map userId to id so the service reads the numeric ID, not the email
+    req.user.id = req.user.userId; 
+    
     const report = await reportService.createReport(caseId, req.body || {}, req.user);
+    
+    // You were missing these two lines to finish the request!
     if (!report) return res.status(404).json({ error: "Case not found" });
     return res.status(201).json({ report });
+    
   } catch (error) {
     if (error.status === 400) return res.status(400).json({ error: error.message });
     return next(error);
