@@ -20,6 +20,9 @@ const flightLogRoutes = require("./src/routes/flightLog.routes");
 const { profile: droneProfile } = require("./src/controllers/flightLogController");
 const { uploadErrorHandler } = require("./src/middleware/errorHandler");
 
+const reportRoutes = require("./src/routes/report.routes");
+const adminRoutes = require("./src/routes/admin.routes");
+
 // Unofficial car-damage detection test endpoint (POST /api/damage/analyze)
 const damageRoutes = require("./src/routes/damage.routes");
 const processingRoutes = require("./src/routes/processing.routes");
@@ -97,6 +100,8 @@ app.use("/api/review", reviewerRoutes);
 // Image Upload & Storage API (POST /api/cases/:id/upload/images, GET /api/cases/:id/images)
 app.use("/api/cases", imageRoutes);
 
+app.use("/api", reportRoutes);
+app.use("/api/admin", adminRoutes);
 // GCP import (POST /api/cases/:id/gcps/import, POST|GET|DELETE /api/cases/:id/gcps)
 app.use("/api/cases", gcpRoutes);
 

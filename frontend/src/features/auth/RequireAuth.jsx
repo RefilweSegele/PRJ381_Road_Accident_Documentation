@@ -12,7 +12,7 @@ const HOME_BY_ROLE = {
 
 
 export default function RequireAuth({ roles }) {
-  const token = localStorage.getItem("jwt_token");
+  const token = localStorage.getItem("authToken");
   const role = localStorage.getItem("user_role");
 
   if (!token || !role) {

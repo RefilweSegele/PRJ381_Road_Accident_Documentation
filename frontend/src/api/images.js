@@ -8,7 +8,7 @@ export async function uploadCaseImages(caseId, files) {
   // Field name must match multer's .array("images") in uploadImages.js.
   files.forEach((file) => form.append("images", file));
 
-  const token = localStorage.getItem("jwt_token");
+  const token = localStorage.getItem("authToken");
   const res = await fetch(`${API_BASE}/cases/${caseId}/upload/images`, {
     method: "POST",
     headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -24,7 +24,7 @@ export async function uploadCaseImages(caseId, files) {
 }
 
 export async function fetchCaseImages(caseId) {
-  const token = localStorage.getItem("jwt_token");
+  const token = localStorage.getItem("authToken");
   const res = await fetch(`${API_BASE}/cases/${caseId}/images`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });

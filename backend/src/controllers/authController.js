@@ -1,85 +1,162 @@
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
-const authService = require('../services/authService');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'daias_super_secret_key';
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+const authService = require("../services/authService");
 
-// Demo accounts are deliberately defined on the server: the selected role is
-// never accepted as an authority claim from the browser. Replace this map with
-// a users-table lookup/SSO provider when deploying beyond the demonstration.
-const DEMO_USERS = {
-  "investigator@daias.demo": { id: 1, role: "investigator" },
-  "insurer@daias.demo": { id: 2, role: "insurer" },
-  "law@daias.demo": { id: 3, role: "law_enforcement" },
-  "admin@daias.demo": { id: 4, role: "admin" },
-};
+const ROLES = new Set([
+  "investigator",
+  "insurer",
+  "law_enforcement"
+]);
 
-const ROLES = new Set(["investigator", "insurer", "law_enforcement", "admin"]);
+function hasValidJwtSecret() {
+  return typeof process.env.JWT_SECRET === "string" &&
+    process.env.JWT_SECRET.length >= 32;
+}
 
 function issueToken(user) {
   return jwt.sign(
-    { userId: user.id, email: user.email, role: user.role },
-    JWT_SECRET,
-    { expiresIn: '8h' },
+    {
+      userId: user.id,
+      email: user.email,
+      role: user.role
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "8h",
+      algorithm: "HS256"
+    }
   );
 }
 
 async function register(req, res) {
   try {
-    const normalizedEmail = String(req.body.email || "").trim().toLowerCase();
-    const password = String(req.body.password || "");
-    const role = String(req.body.role || "");
-    if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
-      return res.status(400).json({ error: "A valid email address is required" });
+    if (!hasValidJwtSecret()) {
+      return res.status(503).json({
+        error: "JWT_SECRET must be configured (at least 32 characters)"
+      });
     }
-    if (password.length < 8) {
-      return res.status(400).json({ error: "Password must be at least 8 characters" });
+
+    const { name, email, password, role } = req.body || {};
+
+    const normalizedName =
+      typeof name === "string" ? name.trim() : "";
+
+    const normalizedEmail =
+      typeof email === "string" ? email.trim().toLowerCase() : "";
+
+    if (!normalizedName) {
+      return res.status(400).json({
+        error: "Name is required"
+      });
     }
+
+    if (
+      normalizedEmail.length > 254 ||
+      !/^\S+@\S+\.\S+$/.test(normalizedEmail)
+    ) {
+      return res.status(400).json({
+        error: "A valid email address is required"
+      });
+    }
+
+    if (typeof password !== "string" || password.length < 8) {
+      return res.status(400).json({
+        error: "Password must be at least 8 characters"
+      });
+    }
+
     if (!ROLES.has(role)) {
-      return res.status(400).json({ error: "Choose a valid demo role" });
+      return res.status(400).json({
+        error: "Invalid registration role"
+      });
     }
-    if (DEMO_USERS[normalizedEmail] || await authService.findUserByEmail(normalizedEmail)) {
-      return res.status(409).json({ error: "An account with that email already exists" });
+
+    const existingUser =
+      await authService.findUserByEmail(normalizedEmail);
+
+    if (existingUser) {
+      return res.status(409).json({
+        error: "An account with that email already exists"
+      });
     }
+
+    const passwordHash = await bcrypt.hash(password, 12);
+
     const user = await authService.createUser({
+      name: normalizedName,
       email: normalizedEmail,
-      passwordHash: await bcrypt.hash(password, 12),
-      role,
+      passwordHash,
+      role
     });
-    res.status(201).json({ message: "Demo account created", token: issueToken(user), role: user.role });
+
+    return res.status(201).json({
+      message: "Account created",
+      token: issueToken(user),
+      role: user.role
+    });
+
   } catch (error) {
-    res.status(500).json({ error: "Unable to create account" });
+    if (error.code === "23505") {
+      return res.status(409).json({
+        error: "An account with that email already exists"
+      });
+    }
+
+    console.error("Registration failed:", error);
+    return res.status(500).json({
+      error: "Unable to create account"
+    });
   }
 }
 
-const login = async (req, res) => {
+async function login(req, res) {
   try {
-    const { email, password, role } = req.body;
-    const normalizedEmail = String(email || "").trim().toLowerCase();
-    const registeredUser = await authService.findUserByEmail(normalizedEmail);
-    const demoUser = DEMO_USERS[normalizedEmail];
-    const user = registeredUser || (demoUser && { ...demoUser, email: normalizedEmail });
-    if (!user || (role && role !== user.role)) {
-      return res.status(401).json({ error: "Invalid email, password, or role" });
+    if (!hasValidJwtSecret()) {
+      return res.status(503).json({
+        error: "JWT_SECRET must be configured (at least 32 characters)"
+      });
     }
 
-    const isPasswordValid = registeredUser
-      ? await bcrypt.compare(password || "", registeredUser.password_hash)
-      : password === "SecurePassword123!";
-    if (!isPasswordValid) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+    const { email, password } = req.body || {};
+
+    if (
+      typeof email !== "string" ||
+      typeof password !== "string" ||
+      !email.trim() ||
+      !password ||
+      email.length > 254
+    ) {
+      return res.status(400).json({
+        error: "Valid email and password are required"
+      });
     }
 
-    const token = issueToken(user);
+    const user = await authService.findUserByEmail(email.trim());
 
-    res.status(200).json({
-      message: 'Authentication successful',
-      token,
+    if (
+      !user ||
+      user.status !== "active" ||
+      !(await bcrypt.compare(password, user.password_hash))
+    ) {
+      return res.status(401).json({
+        error: "Invalid email or password"
+      });
+    }
+
+    return res.status(200).json({
+      message: "Authentication successful",
+      token: issueToken(user),
       role: user.role
     });
+
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error during login' });
+    console.error("Login failed:", error);
+
+    return res.status(500).json({
+      error: "Internal server error during login"
+    });
   }
-};
+}
 
 module.exports = { login, register };

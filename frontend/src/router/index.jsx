@@ -1,14 +1,20 @@
-// frontend/src/router/index.jsx
+
 import { Routes, Route, Navigate } from "react-router-dom";
+
 import LoginPage from "../features/auth/LoginPage";
 import RegistrationPage from "../features/auth/RegistrationPage";
 import RequireAuth from "../features/auth/RequireAuth";
+
 import CaseDashboard from "../features/investigator/CaseDashboard";
 import CaseIntakeForm from "../features/investigator/CaseIntakeForm";
 import UploadWizard from "../features/investigator/upload/UploadWizard";
+import CaseStatusPage from "../features/investigator/CaseStatusPage";
+
 import SearchPortal from "../features/reviewer/SearchPortal";
 import CaseDetailPage from "../features/reviewer/CaseDetailPage";
 import ReportGenerator from "../features/reviewer/ReportGenerator";
+
+import AdminConsole from "../features/admin/AdminConsole";
 import UserPipelineMgmt from "../features/admin/UserPipelineMgmt";
 import CaseStatusPage from "../features/investigator/CaseStatusPage";
 import DamageTestPage from "../features/investigator/damage/damageTestPage";//for the damage test page
@@ -16,11 +22,11 @@ import DamageTestPage from "../features/investigator/damage/damageTestPage";//fo
 export default function AppRoutes() {
   return (
     <Routes>
-      {/* Public */}
+      {/* Public routes */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegistrationPage />} />
 
-      {/* Investigator */}
+      {/* Investigator routes */}
       <Route
         path="/investigator"
         element={<RequireAuth roles={["investigator"]} />}
@@ -33,21 +39,53 @@ export default function AppRoutes() {
         <Route path="cases/:id/viewer" element={<CaseDetailPage />} />
       </Route>
 
-      {/* Reviewer (insurer + law enforcement) */}
+      {/* Reviewer routes */}
       <Route
         path="/review"
-        element={<RequireAuth roles={["insurer", "law_enforcement"]} />}
+        element={
+          <RequireAuth
+            roles={["insurer", "law_enforcement", "admin"]}
+          />
+        }
       >
         <Route index element={<Navigate to="cases" replace />} />
         <Route path="cases" element={<SearchPortal />} />
         <Route path="cases/:id" element={<CaseDetailPage />} />
-        <Route path="cases/:id/report" element={<ReportGenerator />} />
+        <Route
+          path="cases/:id/report"
+          element={<ReportGenerator />}
+        />
       </Route>
 
-      {/* Admin */}
-      <Route path="/admin" element={<RequireAuth roles={["admin"]} />}>
+      {/* Member 9 report generation */}
+      <Route
+        element={
+          <RequireAuth
+            roles={["insurer", "law_enforcement", "admin"]}
+          />
+        }
+      >
+        <Route
+          path="/reports/generate"
+          element={<ReportGenerator />}
+        />
+      </Route>
+
+      {/* Administration */}
+      <Route
+        path="/admin"
+        element={<RequireAuth roles={["admin"]} />}
+      >
         <Route index element={<Navigate to="users" replace />} />
-        <Route path="users" element={<UserPipelineMgmt />} />
+        <Route path="users" element={<AdminConsole />} />
+      </Route>
+
+      {/* Existing upload URL compatibility */}
+      <Route
+        path="/cases/:id/upload"
+        element={<RequireAuth roles={["investigator"]} />}
+      >
+        <Route index element={<UploadWizard />} />
       </Route>
 
      {/* Unofficial damage-detection test page (any signed-in role) */}
