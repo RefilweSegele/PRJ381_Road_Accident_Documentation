@@ -5,6 +5,7 @@ import { Alert, Button, Card, Descriptions, Skeleton, Space } from "antd";
 import { fetchCase } from "../../api/cases";
 import StatusTag from "../../components/common/StatusTag";
 import { formatDate, formatDateTime } from "../../utils/formatDate";
+import "../reviewer/reviewer.css";
 
 export default function CaseStatusPage() {
   const { id } = useParams();
@@ -19,13 +20,11 @@ export default function CaseStatusPage() {
   });
 
   if (isLoading) {
-    return <Skeleton active style={{ maxWidth: 800, margin: "40px auto" }} />;
-  }
-
+    return <div className="page" style={{ maxWidth: 840 }}><Skeleton active /></div>;
   if (isError || !data) {
     return (
-      <div style={{ maxWidth: 800, margin: "40px auto", padding: 24 }}>
-        <Alert
+     <div className="page" style={{ maxWidth: 840 }}>
+        <Alert        
           type="error"
           showIcon
           message="Case not found"
@@ -39,8 +38,9 @@ export default function CaseStatusPage() {
   }
 
   return (
-    <div style={{ maxWidth: 800, margin: "40px auto", padding: 24 }}>
+    <div className="page" style={{ maxWidth: 840 }}>
       <Card
+        className="section-card"
         title={`Case ${data.caseReference}`}
         extra={<StatusTag status={data.status} />}
       >
@@ -61,4 +61,5 @@ export default function CaseStatusPage() {
       </Card>
     </div>
   );
+}
 }

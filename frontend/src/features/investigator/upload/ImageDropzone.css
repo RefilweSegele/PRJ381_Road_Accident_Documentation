@@ -1,35 +1,39 @@
-.dropzone-card{
-    margin-bottom: 20px;
+.dropzone-card {
+  margin-bottom: 20px;
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(18,22,29,.05), 0 10px 28px -12px rgba(18,22,29,.12);
 }
 
-.dropzone-area{
-    border: 2px dashed #1890ff;
-    padding: 40px;
-    text-align: center;
-    background-color: #fafafa;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: background-color 0.3s ease;
+.dropzone-area {
+  border: 2px dashed #c3cad5;
+  padding: 44px 24px;
+  text-align: center;
+  background-color: #f7f8fa;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
-.dropzone-area.active{
-    background-color: #e6f7ff;
-}
-
-.dropzone-icon{
-    font-size: 48px;
-    color: #1890ff;
+.dropzone-area:hover { border-color: var(--amber); background-color: #fffbee; }
+.dropzone-area.active {
+  border-color: var(--amber);
+  background-color: #fff6d6;
 }
 
-.thumnail-grid {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-top: 20px;
+.dropzone-icon {
+  font-size: 44px;
+  color: #12161d;
 }
 
-.thumnail-image {
-    width: 80px;
-    height: 80px;
-    object-fit: cover;
-    border-radius: 4px;
+.thimnail-grid, .thumnail-grid, .thumbnail-grid {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.thumbnail-image, .thumnail-image {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
 }

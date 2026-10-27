@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from "react";
+import "./reviewer.css";
 import { useSearchParams } from "react-router-dom";
 import {
   Alert,
@@ -235,25 +236,19 @@ export default function ReportGenerator() {
   };
 
   return (
-    <div
-      style={{
-        maxWidth: 1200,
-        margin: "0 auto",
-        padding: 24,
-        minHeight: "100vh",
-        background: "#f5f5f5",
-      }}
-    >
-      <Title level={2}>
-        <FilePdfOutlined /> Forensic Report Generator
-      </Title>
-
-      <Text type="secondary">
-        Generate, review, and download reports saved
-        in the DAIAS database.
-      </Text>
+    <div className="page">
+      <div className="page-head">
+        <div>
+          <h1>Report generator</h1>
+          <p>
+            Generate, review and download forensic reports for any processed
+            case.
+          </p>
+        </div>
+      </div>
 
       <Card
+        className="section-card"
         title="Select accident case"
         style={{
           marginTop: 20,
@@ -271,9 +266,7 @@ export default function ReportGenerator() {
             onChange={handleCaseChange}
             options={cases.map((item) => ({
               value: item.id,
-              label: `${
-                item.caseReference || `Case ${item.id}`
-              } — ${
+              label: `${item.caseReference || `Case ${item.id}`} — ${
                 item.incidentAddress || "No address"
               }`,
             }))}
@@ -315,20 +308,14 @@ export default function ReportGenerator() {
               <Card>
                 <Statistic
                   title="Case"
-                  value={
-                    caseDetails.caseReference ||
-                    caseDetails.id
-                  }
+                  value={caseDetails.caseReference || caseDetails.id}
                 />
               </Card>
             </Col>
 
             <Col xs={24} md={8}>
               <Card>
-                <Statistic
-                  title="Existing reports"
-                  value={reports.length}
-                />
+                <Statistic title="Existing reports" value={reports.length} />
               </Card>
             </Col>
 
@@ -336,31 +323,24 @@ export default function ReportGenerator() {
               <Card>
                 <Statistic
                   title="Vehicles"
-                  value={
-                    caseDetails.vehicleCount ?? 0
-                  }
+                  value={caseDetails.vehicleCount ?? 0}
                 />
               </Card>
             </Col>
           </Row>
 
           <Card
+            className="section-card"
             title="Case information"
             style={{ marginTop: 16 }}
           >
-            <Descriptions
-              bordered
-              column={{ xs: 1, sm: 2 }}
-            >
+            <Descriptions bordered column={{ xs: 1, sm: 2 }}>
               <Descriptions.Item label="Case reference">
-                {caseDetails.caseReference ||
-                  caseDetails.id}
+                {caseDetails.caseReference || caseDetails.id}
               </Descriptions.Item>
 
               <Descriptions.Item label="Status">
-                <Tag>
-                  {caseDetails.status || "Unknown"}
-                </Tag>
+                <Tag>{caseDetails.status || "Unknown"}</Tag>
               </Descriptions.Item>
 
               <Descriptions.Item label="Incident date">
@@ -368,13 +348,11 @@ export default function ReportGenerator() {
               </Descriptions.Item>
 
               <Descriptions.Item label="Location">
-                {caseDetails.incidentAddress ||
-                  "Not recorded"}
+                {caseDetails.incidentAddress || "Not recorded"}
               </Descriptions.Item>
 
               <Descriptions.Item label="Investigator">
-                {caseDetails.assignedInvestigator ||
-                  "Not assigned"}
+                {caseDetails.assignedInvestigator || "Not assigned"}
               </Descriptions.Item>
 
               <Descriptions.Item label="Created">
@@ -384,6 +362,7 @@ export default function ReportGenerator() {
           </Card>
 
           <Card
+            className="section-card"
             title="Prepare forensic report"
             style={{ marginTop: 16 }}
           >
@@ -408,31 +387,21 @@ export default function ReportGenerator() {
                 rules={[
                   {
                     required: true,
-                    message:
-                      "Please enter a report title",
+                    message: "Please enter a report title",
                   },
                 ]}
               >
-                <Input
-                  placeholder="Enter report title"
-                  maxLength={200}
-                />
+                <Input placeholder="Enter report title" maxLength={200} />
               </Form.Item>
 
-              <Form.Item
-                name="executiveSummary"
-                label="Executive summary"
-              >
+              <Form.Item name="executiveSummary" label="Executive summary">
                 <Input.TextArea
                   rows={4}
                   placeholder="Summarize the documented accident case"
                 />
               </Form.Item>
 
-              <Form.Item
-                name="reviewerNotes"
-                label="Reviewer notes"
-              >
+              <Form.Item name="reviewerNotes" label="Reviewer notes">
                 <Input.TextArea
                   rows={4}
                   placeholder="Add reviewer observations"
@@ -451,6 +420,7 @@ export default function ReportGenerator() {
           </Card>
 
           <Card
+            className="section-card"
             title="Saved reports"
             style={{ marginTop: 16 }}
           >
@@ -467,12 +437,8 @@ export default function ReportGenerator() {
                     <Button
                       key="download"
                       icon={<DownloadOutlined />}
-                      loading={
-                        downloadingId === report.id
-                      }
-                      onClick={() =>
-                        downloadPdf(report)
-                      }
+                      loading={downloadingId === report.id}
+                      onClick={() => downloadPdf(report)}
                     >
                       Download PDF
                     </Button>,
@@ -480,15 +446,10 @@ export default function ReportGenerator() {
                 >
                   <List.Item.Meta
                     title={`${
-                      report.title ||
-                      "Forensic Road Accident Report"
+                      report.title || "Forensic Road Accident Report"
                     } #${report.id}`}
-                    description={`Created ${dateText(
-                      report.created_at
-                    )}${
-                      report.generated_by
-                        ? ` · By ${report.generated_by}`
-                        : ""
+                    description={`Created ${dateText(report.created_at)}${
+                      report.generated_by ? ` · By ${report.generated_by}` : ""
                     }`}
                   />
                 </List.Item>

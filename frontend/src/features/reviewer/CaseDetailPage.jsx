@@ -146,14 +146,7 @@ export default function CaseDetailPage() {
   }
 
   return (
-    <div
-      style={{
-        position: "relative",
-        minHeight: "100vh",
-        padding: 16,
-        background: "#f5f5f5"
-      }}
-    >
+    <div className="page" style={{ position: "relative" }}>
       <div
         style={{
           display: "flex",
@@ -161,18 +154,27 @@ export default function CaseDetailPage() {
           alignItems: "center",
           flexWrap: "wrap",
           gap: 12,
-          marginBottom: 20
+          marginBottom: 20,
         }}
       >
-        <h1 style={{ margin: 0 }}>
-          Case {caseData.caseReference || id} - 3D Viewer
-        </h1>
+        <div>
+          <h1
+            style={{
+              margin: 0,
+              fontSize: 26,
+              fontWeight: 800,
+              letterSpacing: "-0.03em",
+            }}
+          >
+            Case {caseData.caseReference || id}
+          </h1>
+          <p style={{ margin: "4px 0 0", color: "var(--ink-dim)" }}>
+            3D scene viewer
+          </p>
+        </div>
 
         <Space wrap>
-          <Button
-            icon={<ArrowLeftOutlined />}
-            onClick={handleBackToCases}
-          >
+          <Button icon={<ArrowLeftOutlined />} onClick={handleBackToCases}>
             Back to Cases
           </Button>
 
@@ -219,17 +221,14 @@ export default function CaseDetailPage() {
           message="3D Model Unavailable"
           description={
             <>
+              <p>No valid 3D model is currently available for this case.</p>
               <p>
-                No valid 3D model is currently available
-                for this case.
-              </p>
-              <p>
-                The viewer will become available when
-                the case has a valid model file.
+                The viewer will become available when the case has a valid model
+                file.
               </p>
               <p style={{ marginBottom: 0 }}>
-                You can still generate a report using
-                the Generate Report button above.
+                You can still generate a report using the Generate Report button
+                above.
               </p>
             </>
           }

@@ -1,9 +1,16 @@
 .wizard-container {
-    max-width: 800px;
-    margin: 40px auto;
-    padding: 0 20px;
-  }
-  
-  .wizard-title {
-    margin-bottom: 24px;
-  }
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 28px 32px 56px;
+}
+
+.wizard-title {
+  margin: 0 0 4px;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+@media (max-width: 720px) {
+  .wizard-container { padding: 20px 16px 40px; }
+}

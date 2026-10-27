@@ -1,0 +1,202 @@
+.shell {
+  --rail-w: 252px;
+  min-height: 100vh;
+  background: var(--paper);
+}
+.shell--collapsed { --rail-w: 76px; }
+
+/* ---------- sidebar ---------- */
+.rail {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: var(--rail-w);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  background: var(--asphalt);
+  color: #c9d0da;
+  border-right: 1px solid #0b0e13;
+  transition: width 0.22s ease, transform 0.25s ease;
+}
+
+.rail__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 68px;
+  padding: 0 22px;
+  border-bottom: 1px solid var(--asphalt-line);
+  flex-shrink: 0;
+}
+.rail__mark { flex-shrink: 0; display: grid; }
+.rail__name { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
+.rail__name strong { color: #fff; font-size: 17px; font-weight: 800; letter-spacing: 0.04em; }
+.rail__name span { font-size: 11.5px; color: #8591a3; white-space: nowrap; }
+
+.rail__nav {
+  position: relative;
+  flex: 1;
+  padding: 22px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+/* The centre line of a road, running behind the nav items. */
+.rail__nav::before {
+  content: "";
+  position: absolute;
+  left: 27px;
+  top: 12px;
+  bottom: 12px;
+  width: 2px;
+  background: repeating-linear-gradient(to bottom, var(--asphalt-line) 0 8px, transparent 8px 16px);
+}
+
+.rail__link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 44px;
+  padding: 0 14px 0 14px;
+  border-radius: 10px;
+  color: #aab3c0;
+  text-decoration: none;
+  font-size: 14.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.rail__link svg { flex-shrink: 0; position: relative; z-index: 1; }
+.rail__link:hover { background: var(--asphalt-2); color: #fff; }
+
+/* Amber dash that lights up on the road line for the current page. */
+.rail__dash {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  width: 2px;
+  height: 0;
+  background: var(--amber);
+  border-radius: 2px;
+  transform: translateY(-50%);
+  transition: height 0.2s ease;
+}
+.rail__link--active {
+  background: var(--asphalt-3);
+  color: #fff;
+  font-weight: 600;
+}
+.rail__link--active svg { color: var(--amber); }
+.rail__link--active .rail__dash { height: 26px; left: -14px; width: 4px; border-radius: 0 4px 4px 0; }
+
+.rail__foot {
+  padding: 14px;
+  border-top: 1px solid var(--asphalt-line);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.rail__user { display: flex; align-items: center; gap: 12px; padding: 8px 8px 12px; }
+.rail__avatar {
+  width: 36px; height: 36px; flex-shrink: 0;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--amber-soft);
+  color: var(--amber);
+  font-weight: 800;
+}
+.rail__who { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+.rail__who strong { color: #fff; font-size: 13.5px; font-weight: 600; white-space: nowrap; }
+.rail__who span { font-size: 11.5px; color: #8591a3; }
+
+.rail__action, .rail__close {
+  display: flex; align-items: center; gap: 14px;
+  height: 40px; padding: 0 14px;
+  border: 0; border-radius: 10px;
+  background: transparent;
+  color: #aab3c0;
+  font: inherit; font-size: 14px; font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.rail__action:hover, .rail__close:hover { background: var(--asphalt-2); color: #fff; }
+
+.rail__close { display: none; margin-left: auto; }
+
+/* ---------- main column ---------- */
+.shell__main {
+  margin-left: var(--rail-w);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: margin-left 0.22s ease;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 68px;
+  padding: 0 32px;
+  background: rgba(238, 240, 243, 0.86);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--rule);
+}
+.topbar__title { margin: 0; font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+.topbar__role {
+  margin-left: auto;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-dim);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 5px 12px;
+}
+.topbar__role:empty { display: none; }
+.topbar__menu {
+  display: none;
+  width: 40px; height: 40px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  place-items: center;
+}
+
+.shell__content { flex: 1; min-width: 0; }
+.shell__scrim { position: fixed; inset: 0; background: rgba(8, 10, 14, 0.55); z-index: 45; }
+
+/* ---------- collapsed rail ---------- */
+.shell--collapsed .rail__name,
+.shell--collapsed .rail__label,
+.shell--collapsed .rail__who { display: none; }
+.shell--collapsed .rail__brand { padding: 0 22px; }
+.shell--collapsed .rail__nav::before { left: 27px; }
+.shell--collapsed .rail__user { padding-left: 8px; }
+
+/* ---------- mobile: rail becomes a drawer ---------- */
+@media (max-width: 900px) {
+  .shell, .shell--collapsed { --rail-w: 270px; }
+  .rail { transform: translateX(-100%); width: 270px; }
+  .rail--open { transform: none; box-shadow: 0 0 40px rgba(0,0,0,.4); }
+  .shell--collapsed .rail__name,
+  .shell--collapsed .rail__label,
+  .shell--collapsed .rail__who { display: revert; }
+  .shell--collapsed .rail__name { display: flex; }
+  .shell--collapsed .rail__who { display: flex; }
+  .rail__close { display: grid; place-items: center; width: 36px; padding: 0; margin-left: auto; }
+  .rail__action--collapse { display: none; }
+  .shell__main, .shell--collapsed .shell__main { margin-left: 0; }
+  .topbar { padding: 0 16px; }
+  .topbar__menu { display: grid; }
+}

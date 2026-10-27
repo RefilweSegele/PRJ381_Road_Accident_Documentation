@@ -1,15 +1,15 @@
 .case-dashboard {
-  --dd-bg: #f5f7fa;
+--dd-bg: transparent;
   --dd-surface: #ffffff;
-  --dd-surface-2: #f0f2f5;
+  --dd-surface-2: #f4f6f8;
   --dd-surface-3: #e6e9ee;
-  --dd-border: #e0e4ea;
+  --dd-border: #e2e5ea;
   --dd-border-strong: #c8ced7;
-  --dd-text: #1a2027;
+  --dd-text: #151a22;
   --dd-text-dim: #5b6673;
-  --dd-text-muted: #8b93a1;
-  --dd-primary: #3b82f6;
-  --dd-primary-soft: rgba(59, 130, 246, 0.1);
+  --dd-text-muted: #7b8493;
+  --dd-primary: #2b4c9b;
+  --dd-primary-soft: rgba(43, 76, 155, 0.09);
   --dd-success: #16a34a;
   --dd-success-soft: rgba(22, 163, 74, 0.12);
   --dd-warning: #d97706;
@@ -21,14 +21,12 @@
   --dd-violet: #7c3aed;
   --dd-violet-soft: rgba(124, 58, 237, 0.12);
   --dd-neutral-soft: rgba(100, 116, 139, 0.12);
-  --dd-radius: 10px;
+  --dd-radius: 12px;
   --dd-radius-sm: 6px;
-  --dd-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --dd-shadow: 0 1px 2px rgba(18,22,29,.05), 0 10px 28px -12px rgba(18,22,29,.14);
 
   background: var(--dd-bg);
   color: var(--dd-text);
-  padding: 20px;
-  border-radius: 14px;
   animation: dd-fade-in 0.35s ease-out;
 }
 
@@ -39,17 +37,17 @@
 
 .case-dashboard__header {
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 22px;
 }
 
 .case-dashboard__title {
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.035em;
   margin: 0;
   color: var(--dd-text);
 }
