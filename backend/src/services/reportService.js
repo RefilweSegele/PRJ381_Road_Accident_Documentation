@@ -67,23 +67,31 @@ async function collectCaseSnapshot(caseId) {
 
 async function createReport(caseId, input, user) {
   if (!input || typeof input !== "object" || Array.isArray(input)) throw Object.assign(new Error("Report body must be an object"), { status: 400 });
+  
   const snapshot = await collectCaseSnapshot(caseId);
   if (!snapshot) return null;
+  
+  // Extract the numeric ID. Throw an error if it is missing so the DB doesn't crash.
+  const numericUserId = user?.id || user?.userId;
+  if (!numericUserId) throw Object.assign(new Error("Valid user ID required to generate report"), { status: 401 });
+
   const reportData = {
     ...snapshot,
     title: optionalText(input.title, "title") || "Forensic Road Accident Report",
     generatedAt: new Date().toISOString(),
-    generatedBy: user?.email || String(user?.userId || "unknown"),
+    generatedBy: numericUserId, // <--- FIXED: Now safely uses the numeric ID
     executiveSummary: optionalText(input.executiveSummary, "executiveSummary"),
     measurements: normalizeMeasurements(input.measurements),
     findings: normalizeFindings(input.findings),
     reviewerNotes: optionalText(input.reviewerNotes, "reviewerNotes"),
   };
+  
   const result = await pool.query(
     `INSERT INTO reports (case_id, generated_by, title, report_data)
      VALUES ($1, $2, $3, $4::jsonb)
      RETURNING id, case_id, generated_by, title, report_data, created_at`,
     [caseId, reportData.generatedBy, reportData.title, JSON.stringify(reportData)]);
+    
   return result.rows[0];
 }
 

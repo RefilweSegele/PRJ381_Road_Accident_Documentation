@@ -16,7 +16,7 @@ export default function useAuthedBlob(url, mime) {
 
     (async () => {
       try {
-        const token = localStorage.getItem("jwt_token");
+        const token = localStorage.getItem("authToken");
         const res = await fetch(url, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
           signal: controller.signal,

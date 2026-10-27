@@ -1,11 +1,14 @@
 """
 Car damage detection (YOLOv8 segmentation: crack / dent / scratch).
 
-CLI:  python damageDetection.py <image_path> [--conf 0.25] [--no-image]
+CLI:  python damageDetection.py <manifest_path> [--conf 0.25] [--no-image]
 
-Prints exactly ONE line of JSON on stdout:
+Reads a JSON manifest of [{"id": 1, "path": "..."}] and prints exactly ONE line 
+of JSON on stdout per image:
 {
-  "image": {"width": W, "height": H},
+  "id": ID,
+  "width": W, 
+  "height": H,
   "detections": [{"damage_class", "confidence_score", "polygon_coords", "bbox"}],
   "annotated_image": "<base64 JPEG>"        # omitted with --no-image
 }
@@ -115,7 +118,7 @@ class CarDamageDetector:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("image_path")
+    parser.add_argument("manifest_path")
     parser.add_argument("--conf", type=float, default=0.25)
     parser.add_argument("--no-image", action="store_true")
     args = parser.parse_args()
@@ -123,18 +126,40 @@ def main():
     # Anything printed while loading/running the model must not reach stdout.
     real_stdout = sys.stdout
     sys.stdout = sys.stderr
+    
     try:
-        image = load_image_bgr(args.image_path)
-        detections = CarDamageDetector().analyze_array(image, args.conf)
-        payload = {
-            "image": {"width": int(image.shape[1]), "height": int(image.shape[0])},
-            "detections": detections,
-        }
-        if not args.no_image:
-            payload["annotated_image"] = encode_jpeg_b64(draw_detections(image, detections))
+        # Load the JSON list of images passed by Node.js
+        with open(args.manifest_path, 'r', encoding='utf-8') as f:
+            manifest = json.load(f)
+            
+        detector = CarDamageDetector()
+        
+        # Process each image in the manifest
+        for item in manifest:
+            img_id = item.get("id")
+            img_path = item.get("path")
+            
+            try:
+                image = load_image_bgr(img_path)
+                detections = detector.analyze_array(image, args.conf)
+                payload = {
+                    "id": img_id,
+                    "width": int(image.shape[1]),
+                    "height": int(image.shape[0]),
+                    "detections": detections,
+                }
+                if not args.no_image:
+                    payload["annotated_image"] = encode_jpeg_b64(draw_detections(image, detections))
+                    
+                # Print result back to Node.js
+                print(json.dumps(payload), file=real_stdout, flush=True)
+                
+            except Exception as exc:
+                # If one image fails, report the error but keep processing the rest
+                print(json.dumps({"id": img_id, "error": str(exc)}), file=real_stdout, flush=True)
+                
     finally:
         sys.stdout = real_stdout
-    print(json.dumps(payload))
 
 
 if __name__ == "__main__":

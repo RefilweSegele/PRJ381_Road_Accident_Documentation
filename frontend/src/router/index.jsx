@@ -1,4 +1,3 @@
-
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import LoginPage from "../features/auth/LoginPage";
@@ -16,8 +15,7 @@ import ReportGenerator from "../features/reviewer/ReportGenerator";
 
 import AdminConsole from "../features/admin/AdminConsole";
 import UserPipelineMgmt from "../features/admin/UserPipelineMgmt";
-import CaseStatusPage from "../features/investigator/CaseStatusPage";
-import DamageTestPage from "../features/investigator/damage/damageTestPage";//for the damage test page
+import DamageTestPage from "../features/investigator/damage/damageTestPage"; //for the damage test page
 
 export default function AppRoutes() {
   return (
