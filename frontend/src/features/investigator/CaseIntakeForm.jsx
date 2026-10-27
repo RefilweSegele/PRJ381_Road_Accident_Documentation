@@ -31,15 +31,22 @@ export default function CaseIntakeForm() {
       return;
     }
 
-    // Only send what the backend stores. accidentType, description and
-    // vehicles are validated by the form but have no database columns yet.
+   
     const payload = {
       incidentAddress: values.incidentAddress.trim(),
-      incidentDate: values.accidentDate.toISOString(), // dayjs -> ISO string
+      incidentDate: values.accidentDate ? values.accidentDate.toISOString() : null, // dayjs -> ISO string
       location: {
         lat: Number(location.lat.toFixed(6)),
         lng: Number(location.lng.toFixed(6)),
       },
+      accidentType: values.accidentType,
+      description: values.description,
+      vehicles: (values.vehicles || []).map((v) => ({
+        registration: v.registration,
+        make: v.make,
+        model: v.model,
+        colour: v.colour,
+      })),
     };
 
     setSubmitting(true);

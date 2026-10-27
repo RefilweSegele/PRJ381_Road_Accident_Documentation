@@ -31,7 +31,9 @@ function toApiCase(row) {
     updatedAt: row.updated_at,
     status: row.status,
     assignedInvestigator: row.assigned_investigator,
-    vehicleCount: 0, // TODO: replace with real count once vehicles table exists
+    accidentType: row.accident_type ?? null,
+    description: row.description ?? null,
+    vehicleCount: row.vehicle_count ?? 0,
   };
 }
 
@@ -84,7 +86,7 @@ async function listCases({
   const dataParams = [...params, pageSize, offset];
 
   const dataQuery = `
-    SELECT * FROM cases
+    SELECT *, (SELECT COUNT(*)::int FROM vehicles v WHERE v.case_id = cases.id) AS vehicle_count FROM cases
     ${whereClause}
     ORDER BY ${column} ${direction}
     LIMIT $${params.length + 1} OFFSET $${params.length + 2}
@@ -111,7 +113,7 @@ async function listAllFilteredCases({ status, search, sortField, sortOrder }) {
   const column = SORTABLE_COLUMNS[sortField] || "updated_at";
   const direction = sortOrder === "ascend" ? "ASC" : "DESC";
 
-  const query = `SELECT * FROM cases ${whereClause} ORDER BY ${column} ${direction}`;
+  const query = `SELECT *, (SELECT COUNT(*)::int FROM vehicles v WHERE v.case_id = cases.id) AS vehicle_count FROM cases ${whereClause} ORDER BY ${column} ${direction}`;
   const result = await pool.query(query, params);
 
   return { data: result.rows.map(toApiCase), total: result.rows.length };
@@ -153,29 +155,49 @@ async function generateCaseReference() {
 
 // Inserts a new case row.
 async function createCase({
-  incidentAddress,
-  incidentDate,
-  latitude,
-  longitude,
-  assignedInvestigator,
+  incidentAddress, incidentDate, latitude, longitude,
+  accidentType, description, assignedInvestigator, vehicles = [],
 }) {
   const caseReference = await generateCaseReference();
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
 
-  const result = await pool.query(
-    `INSERT INTO cases (case_reference, incident_address, incident_date, latitude, longitude, assigned_investigator)
-     VALUES ($1, $2, $3, $4, $5, $6)
-     RETURNING *`,
-    [
-      caseReference,
-      incidentAddress,
-      incidentDate,
-      latitude ?? null,
-      longitude ?? null,
-      assignedInvestigator ?? null,
-    ],
-  );
+    const result = await client.query(
+      `INSERT INTO cases
+         (case_reference, incident_address, incident_date, latitude, longitude,
+          accident_type, description, assigned_investigator)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING *`,
+      [
+        caseReference,
+        incidentAddress,
+        incidentDate,
+        latitude ?? null,
+        longitude ?? null,
+        accidentType ?? null,
+        description ?? null,
+        assignedInvestigator ?? null,
+      ],
+    );
+    const row = result.rows[0];
 
-  return toApiCase(result.rows[0]);
+    for (const v of vehicles) {
+      await client.query(
+        `INSERT INTO vehicles (case_id, registration_number, make, model, colour)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [row.id, v.registration ?? null, v.make ?? null, v.model ?? null, v.colour ?? null],
+      );
+    }
+
+    await client.query("COMMIT");
+    return toApiCase({ ...row, vehicle_count: vehicles.length });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 // Updates only the fields provided — untouched fields keep their current value.
