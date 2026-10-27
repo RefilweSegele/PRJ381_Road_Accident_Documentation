@@ -1,4 +1,4 @@
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button, Layout, Space, Tag, Typography } from "antd";
 import { LogoutOutlined } from "@ant-design/icons";
@@ -40,6 +40,9 @@ export default function AppLayout() {
           DAIAS Portal
         </Typography.Text>
         <Space>
+            <Link to="/damage-test" style={{ color: "rgba(255,255,255,0.75)" }}> 
+            Damage Test
+            </Link>
           {role && <Tag>{ROLE_LABELS[role] || role}</Tag>}
           <Button icon={<LogoutOutlined />} onClick={handleLogout}>
             Log out

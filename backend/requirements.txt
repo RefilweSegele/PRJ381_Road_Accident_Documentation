@@ -1,0 +1,5 @@
+# Python dependencies for backend/src/services/damageDetection.py
+ultralytics>=8.4.0
+pillow
+opencv-python-headless
+numpy
