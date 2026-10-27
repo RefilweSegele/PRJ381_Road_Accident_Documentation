@@ -30,10 +30,7 @@ export function buildExportRows(cases, role) {
       Status: caseRecord.status,
     };
 
-    if (role === "insurer") {
-      row["Claim Number"] = caseRecord.claimNumber;
-      row["Insurer"] = caseRecord.insurerName;
-    } else {
+    if (role !== "insurer") {
       row["Charge / Citation Ref"] = caseRecord.chargeReference;
     }
 

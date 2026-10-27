@@ -52,7 +52,7 @@ async function fetchCases({ search, dateRange }) {
   Constructs the column array required by Ant Design's <Table> component.
   Shapes data mapping using `dataIndex` and custom UI rendering using `render`.
  */
-function buildColumns(role, navigate) {
+function buildColumns(navigate) {
   // Base columns that all users can see, regardless of their role
   const base = [
     { title: "Case ID", dataIndex: "caseId", key: "caseId" },
@@ -72,36 +72,9 @@ function buildColumns(role, navigate) {
     },
   ];
 
-  // Conditionally define extra columns based on the user's role
-  const roleColumns =
-    role === "insurer"
-      ? [
-          {
-            title: "Claim Number",
-            dataIndex: "claimNumber",
-            key: "claimNumber",
-            render: renderOptionalValue,
-          },
-          {
-            title: "Insurer",
-            dataIndex: "insurerName",
-            key: "insurerName",
-            render: renderOptionalValue,
-          },
-        ]
-      : [
-          {
-            title: "Charge / Citation Ref",
-            dataIndex: "chargeReference",
-            key: "chargeReference",
-            render: renderOptionalValue,
-          },
-        ];
-
-  // Merge and return the base columns with the role-specific columns
+  // Keep the actions column at the far right.
   return [
     ...base,
-    ...roleColumns,
     {
       title: "Actions",
       key: "actions",
@@ -141,8 +114,8 @@ export default function SearchPortal() {
 
   // Memoize the columns so they are only recalculated if the user's role actually changes
   const columns = useMemo(
-    () => buildColumns(effectiveRole, navigate),
-    [effectiveRole, navigate],
+    () => buildColumns(navigate),
+    [navigate],
   );
   const cases = data?.cases ?? [];
 
@@ -283,16 +256,6 @@ export default function SearchPortal() {
             >
               <p>{renderOptionalValue(caseRecord.location)}</p>
               <p>Incident: {formatIncidentDate(caseRecord.incidentDate)}</p>
-              {effectiveRole === "insurer" ? (
-                <>
-                  <p>Claim Number: {renderOptionalValue(caseRecord.claimNumber)}</p>
-                  <p>Insurer: {renderOptionalValue(caseRecord.insurerName)}</p>
-                </>
-              ) : (
-                <p>
-                  Charge / Citation Ref: {renderOptionalValue(caseRecord.chargeReference)}
-                </p>
-              )}
             </Card>
           ))}
         </div>
