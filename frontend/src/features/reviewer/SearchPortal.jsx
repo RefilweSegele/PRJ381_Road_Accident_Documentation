@@ -1,5 +1,5 @@
 /*
- -Page 5 — Reviewer Case Search Portal
+ -Page 5 - Reviewer Case Search Portal
  -Route: /review/cases
 */
 
@@ -8,17 +8,32 @@ import React, { useMemo, useState } from "react";
 // TanStack Query for server state management (caching, loading states, refetching)
 import { useQuery } from "@tanstack/react-query";
 // Ant Design UI components for a polished, consistent layout
-import { Input, DatePicker, Select, Button, Tag, Table } from "antd";
+import { Alert, Button, Card, DatePicker, Empty, Input, Segmented, Skeleton, Spin, Table, Tag } from "antd";
 import { SearchOutlined, DownloadOutlined } from "@ant-design/icons";
+import { LayoutGrid, Table as TableIcon } from "lucide-react";
 // React Router hook for programmatic navigation
 import { useNavigate } from "react-router-dom";
 // PapaParse for converting JavaScript arrays/objects into CSV format
 import { unparse } from "papaparse";
 
 import apiClient from "../../api/client";
+import {
+  buildExportRows,
+  formatIncidentDate,
+  isExportDisabled,
+  shouldShowEmptyState,
+} from "./searchPortalUtils";
 
 // Destructure RangePicker from AntD's DatePicker for selecting start and end dates
 const { RangePicker } = DatePicker;
+
+function renderOptionalValue(value) {
+  return value == null || value === "" ? (
+    <span style={{ color: "#999" }}>—</span>
+  ) : (
+    value
+  );
+}
 
 // apiClient already includes the /api base path.
 async function fetchCases({ search, dateRange }) {
@@ -37,12 +52,17 @@ async function fetchCases({ search, dateRange }) {
   Constructs the column array required by Ant Design's <Table> component.
   Shapes data mapping using `dataIndex` and custom UI rendering using `render`.
  */
-function buildColumns(role) {
+function buildColumns(role, navigate) {
   // Base columns that all users can see, regardless of their role
   const base = [
     { title: "Case ID", dataIndex: "caseId", key: "caseId" },
     { title: "Location", dataIndex: "location", key: "location" },
-    { title: "Incident Date", dataIndex: "incidentDate", key: "incidentDate" },
+    {
+      title: "Incident Date",
+      dataIndex: "incidentDate",
+      key: "incidentDate",
+      render: formatIncidentDate,
+    },
     {
       title: "Status",
       dataIndex: "status",
@@ -56,13 +76,42 @@ function buildColumns(role) {
   const roleColumns =
     role === "insurer"
       ? [
-          { title: "Claim Number", dataIndex: "claimNumber", key: "claimNumber" },
-          { title: "Insurer", dataIndex: "insurerName", key: "insurerName" },
+          {
+            title: "Claim Number",
+            dataIndex: "claimNumber",
+            key: "claimNumber",
+            render: renderOptionalValue,
+          },
+          {
+            title: "Insurer",
+            dataIndex: "insurerName",
+            key: "insurerName",
+            render: renderOptionalValue,
+          },
         ]
-      : [{ title: "Charge / Citation Ref", dataIndex: "chargeReference", key: "chargeReference" }];
+      : [
+          {
+            title: "Charge / Citation Ref",
+            dataIndex: "chargeReference",
+            key: "chargeReference",
+            render: renderOptionalValue,
+          },
+        ];
 
   // Merge and return the base columns with the role-specific columns
-  return [...base, ...roleColumns];
+  return [
+    ...base,
+    ...roleColumns,
+    {
+      title: "Actions",
+      key: "actions",
+      render: (_, record) => (
+        <Button type="link" onClick={() => navigate(`/review/cases/${record.id}`)}>
+          View Details
+        </Button>
+      ),
+    },
+  ];
 }
 
 // Main Component
@@ -80,9 +129,10 @@ export default function SearchPortal() {
   // Local UI state for search filters
   const [search, setSearch] = useState("");
   const [dateRange, setDateRange] = useState(null);
+  const [view, setView] = useState("table");
 
   // TanStack Query hook to handle data fetching
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isFetching, isSuccess, isError } = useQuery({
     // queryKey acts as a dependency array; when search or dateRange changes, it refetches automatically
     queryKey: ["reviewerCases", search, dateRange, effectiveRole],
     queryFn: () => fetchCases({ search, dateRange }),
@@ -90,32 +140,17 @@ export default function SearchPortal() {
   });
 
   // Memoize the columns so they are only recalculated if the user's role actually changes
-  const columns = useMemo(() => buildColumns(effectiveRole), [effectiveRole]);
+  const columns = useMemo(
+    () => buildColumns(effectiveRole, navigate),
+    [effectiveRole, navigate],
+  );
+  const cases = data?.cases ?? [];
 
  
    // Transforms the current table data into a CSV file and triggers a browser download.
    
   function handleExportCsv() {
-    // 1. Map over the fetched data to format it for the CSV based on the current role
-    const rows = (data?.cases ?? []).map((c) => {
-      const row = {
-        "Case ID": c.caseId,
-        Location: c.location,
-        "Incident Date": c.incidentDate,
-        Status: c.status,
-      };
-      
-      if (effectiveRole === "insurer") {
-        row["Claim Number"] = c.claimNumber;
-        row["Insurer"] = c.insurerName;
-      } else {
-        row["Charge / Citation Ref"] = c.chargeReference;
-      }
-      return row;
-    });
-
-    // 2. Convert the array of objects into a raw CSV string using PapaParse
-    const csv = unparse(rows);
+    const csv = unparse(buildExportRows(cases, effectiveRole));
     
     // 3. Create a Blob (binary large object) from the CSV string
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -146,50 +181,122 @@ export default function SearchPortal() {
       {/* Top Metrics Section */}
       <div style={{ display: "flex", gap: 24, marginBottom: 16 }}>
         <StatCard label="Pending review" value={data?.pendingReviewCount ?? "—"} />
-        <StatCard
-          label="Avg. turnaround"
-          value={data?.avgTurnaroundDays ? `${data.avgTurnaroundDays} days` : "—"}
+        <StatCard label="Total Results" value={cases.length} />
+      </div>
+
+      <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 16 }}>
+        <Segmented
+          aria-label="Case view"
+          value={view}
+          onChange={setView}
+          options={[
+            { label: "Table", value: "table", icon: <TableIcon size={14} /> },
+            { label: "Grid", value: "grid", icon: <LayoutGrid size={14} /> },
+          ]}
         />
       </div>
 
       {/* Filter and Action Bar */}
       <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
         <Input
-          placeholder="Search case number or description"
+          placeholder="Search by Case ID or Location..."
           prefix={<SearchOutlined />}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           style={{ width: 320 }}
         />
         <RangePicker value={dateRange} onChange={setDateRange} />
-        {/* Hardcoded to 'Complete' as this dashboard is for reviewing finished drone processing */}
-        <Select
-          value="Complete"
-          style={{ width: 160 }}
-          options={[{ value: "Complete", label: "Complete" }]}
-          disabled
-        />
-        <Button icon={<DownloadOutlined />} onClick={handleExportCsv}>
+        <Button
+          onClick={() => {
+            setSearch("");
+            setDateRange(null);
+          }}
+          disabled={!search && !dateRange}
+        >
+          Clear filters
+        </Button>
+        <span>Showing processed and reviewed cases</span>
+        <Button
+          icon={<DownloadOutlined />}
+          onClick={handleExportCsv}
+          disabled={isExportDisabled({ cases, isFetching, isError })}
+          title="Exports all results matching the current filters, across table pages."
+        >
           Export CSV
         </Button>
+        {isFetching && (
+          <span role="status" aria-live="polite">
+            <Spin size="small" /> Loading cases…
+          </span>
+        )}
       </div>
 
-      {/* Main Data Table */}
-      <Table
-        loading={isLoading}
-        rowKey="id" // Uses the database ID while displaying the human-readable case number.
-        dataSource={data?.cases ?? []}
-        columns={columns}
-        pagination={{ pageSize: 10 }}
-        // Makes the entire row clickable, navigating to the specific Case Details page (Page 6)
-        onRow={(record) => ({
-          onClick: () => navigate(`/review/cases/${record.id}`),
-          style: { cursor: "pointer" },
-        })}
-      />
-
-      {/* Error State UI */}
-      {isError && <p style={{ color: "red" }}>Failed to load cases. Try again.</p>}
+      {isError ? (
+        <Alert
+          type="error"
+          showIcon
+          message="Failed to load cases. Try again."
+          style={{ marginBottom: 16 }}
+        />
+      ) : view === "table" ? (
+        <Table
+          loading={isFetching}
+          rowKey="id"
+          dataSource={cases}
+          columns={columns}
+          pagination={{ pageSize: 10 }}
+          locale={{
+            emptyText:
+              shouldShowEmptyState({ isSuccess, isFetching, cases }) ? (
+                <Empty description="No cases found matching your criteria. Try adjusting your search or date filters." />
+              ) : (
+                <span />
+              ),
+          }}
+        />
+      ) : isLoading ? (
+        <Skeleton active paragraph={{ rows: 5 }} />
+      ) : shouldShowEmptyState({ isSuccess, isFetching, cases }) ? (
+        <Empty description="No cases found matching your criteria. Try adjusting your search or date filters." />
+      ) : (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+            gap: 16,
+          }}
+        >
+          {cases.map((caseRecord) => (
+            <Card
+              key={caseRecord.id}
+              title={caseRecord.caseId}
+              extra={<Tag color="green">{caseRecord.status}</Tag>}
+              actions={[
+                <Button
+                  key="details"
+                  type="link"
+                  onClick={() => navigate(`/review/cases/${caseRecord.id}`)}
+                >
+                  View Details
+                </Button>,
+              ]}
+            >
+              <p>{renderOptionalValue(caseRecord.location)}</p>
+              <p>Incident: {formatIncidentDate(caseRecord.incidentDate)}</p>
+              {effectiveRole === "insurer" ? (
+                <>
+                  <p>Claim Number: {renderOptionalValue(caseRecord.claimNumber)}</p>
+                  <p>Insurer: {renderOptionalValue(caseRecord.insurerName)}</p>
+                </>
+              ) : (
+                <p>
+                  Charge / Citation Ref: {renderOptionalValue(caseRecord.chargeReference)}
+                </p>
+              )}
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

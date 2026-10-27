@@ -122,9 +122,9 @@ async function getReviewableCaseById(id) {
 }
 
 async function searchCases({ search, dateFrom, dateTo }) {
-  // The portal lists completed cases; date bounds include both selected calendar days.
-  const conditions = ["status = ANY($1)"];
-  const params = [REVIEWABLE_STATUSES];
+    // The portal lists processed and reviewed cases; date bounds include both selected calendar days.
+    const conditions = ["status = ANY($1)"];
+    const params = [REVIEWABLE_STATUSES];
 
   if (search) {
     params.push(`%${search}%`);

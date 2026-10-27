@@ -57,7 +57,7 @@ async function getCase(req, res, next) {
 // POST /api/cases — create a new case.
 async function createCase(req, res, next) {
   try {
-    const { incidentAddress, incidentDate, location, assignedInvestigator } =
+    const { incidentAddress, incidentDate, location, assignedInvestigator, accidentType, description, vehicles } =
       req.body;
 
     // Minimal required-field validation — expand as the schema grows.
@@ -73,6 +73,9 @@ async function createCase(req, res, next) {
       latitude: location?.lat,
       longitude: location?.lng,
       assignedInvestigator,
+      accidentType,
+      description,
+      vehicles: Array.isArray(vehicles) ? vehicles : [],
     });
 
     res.status(201).json(newCase);
