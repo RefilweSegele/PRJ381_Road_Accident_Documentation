@@ -1,0 +1,46 @@
+/* Shared styling for the reviewer / admin pages inside the app shell. */
+.rv-stats { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
+.rv-stat {
+  position: relative;
+  min-width: 190px;
+  padding: 16px 22px 16px 24px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(18,22,29,.05), 0 10px 28px -12px rgba(18,22,29,.14);
+}
+.rv-stat::before {
+  content: ""; position: absolute; left: 0; top: 16px; bottom: 16px; width: 4px;
+  border-radius: 0 4px 4px 0; background: var(--blue);
+}
+.rv-stat--amber::before { background: var(--amber); }
+.rv-stat__value { font-size: 34px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; }
+.rv-stat__label { margin-top: 8px; font-size: 13px; font-weight: 600; color: var(--ink-dim); }
+
+.rv-toolbar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 12px; margin-bottom: 14px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+}
+.rv-toolbar__search { width: 320px; max-width: 100%; }
+.rv-toolbar__spacer { flex: 1; }
+
+.rv-table.ant-table-wrapper .ant-table {
+  border: 1px solid var(--rule);
+  box-shadow: 0 1px 2px rgba(18,22,29,.05), 0 10px 28px -12px rgba(18,22,29,.14);
+  overflow: hidden;
+}
+
+/* Section card used by admin, intake, upload and report pages. */
+.section-card.ant-card {
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(18,22,29,.05), 0 10px 28px -12px rgba(18,22,29,.12);
+}
+.section-card .ant-card-head { border-bottom-color: var(--rule); }
+
+@media (max-width: 720px) {
+  .rv-toolbar__spacer { display: none; }
+  .rv-toolbar__search { width: 100%; }
+}

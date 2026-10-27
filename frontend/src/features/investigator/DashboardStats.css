@@ -9,9 +9,10 @@
   background: var(--dd-surface);
   border: 1px solid var(--dd-border);
   border-radius: var(--dd-radius);
-  padding: 16px 18px;
-  transition: all 0.15s ease;
-  min-height: 92px;
+  padding: 18px 20px;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  min-height: 116px;
+  box-shadow: var(--dd-shadow);
   text-align: left;
   cursor: pointer;
   position: relative;
@@ -22,9 +23,10 @@
   content: '';
   position: absolute;
   left: 0;
-  top: 0;
-  right: 0;
-  height: 3px;
+  top: 18px;
+  bottom: 18px;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
 }
 
 .dd-stat-card--primary::before { background: var(--dd-primary); }
@@ -43,7 +45,15 @@
 }
 
 .dd-stat-card__icon {
-  margin-bottom: 8px;
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: var(--dd-surface-2);
 }
 
 .dd-stat-card--primary .dd-stat-card__icon { color: var(--dd-primary); }
@@ -52,18 +62,17 @@
 .dd-stat-card--danger .dd-stat-card__icon { color: var(--dd-danger); }
 
 .dd-stat-card__value {
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
   line-height: 1;
+  margin-top: 6px;
   color: var(--dd-text);
 }
 
 .dd-stat-card__label {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--dd-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dd-text-dim);
+  margin-top: 10px;
 }

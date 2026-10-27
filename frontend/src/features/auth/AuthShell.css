@@ -1,0 +1,65 @@
+.auth {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(420px, 0.95fr);
+  background: var(--surface);
+}
+
+.auth__hero {
+  position: relative;
+  overflow: hidden;
+  background: var(--asphalt);
+  color: #fff;
+  display: flex;
+  align-items: flex-end;
+  padding: 56px;
+  isolation: isolate;
+}
+.auth__scene { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; }
+.auth__hero::after {
+  /* keeps the headline legible over the scene */
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(to top, rgba(18,22,29,.96) 18%, rgba(18,22,29,.55) 48%, rgba(18,22,29,0) 75%);
+}
+.auth__brand {
+  display: flex; align-items: center; gap: 12px;
+  font-weight: 800; letter-spacing: .06em; font-size: 18px;
+  margin-bottom: 28px;
+}
+.auth__hero-copy { max-width: 520px; }
+.auth__hero-copy h2 {
+  color: #fff;
+  font-size: clamp(32px, 3.6vw, 48px);
+  line-height: 1.04;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  margin: 0 0 16px;
+}
+.auth__hero-copy p { margin: 0; color: #b4bdca; font-size: 16px; line-height: 1.55; max-width: 44ch; }
+
+.auth__panel { display: grid; place-items: center; padding: 40px 32px; background: var(--paper); }
+.auth__card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 18px;
+  padding: 36px 34px 30px;
+  box-shadow: 0 1px 2px rgba(18,22,29,.05), 0 24px 48px -16px rgba(18,22,29,.14);
+}
+.auth__card h1 { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.03em; }
+.auth__sub { margin: 6px 0 26px; color: var(--ink-dim); }
+.auth__footer { margin-top: 18px; text-align: center; color: var(--ink-dim); font-size: 14px; }
+.auth__footer a { font-weight: 600; }
+
+@media (max-width: 900px) {
+  .auth { grid-template-columns: 1fr; }
+  .auth__hero { min-height: 240px; padding: 28px 24px; }
+  .auth__hero-copy h2 { font-size: 26px; }
+  .auth__hero-copy p { display: none; }
+  .auth__brand { margin-bottom: 14px; }
+  .auth__panel { padding: 24px 16px 40px; align-items: start; }
+}

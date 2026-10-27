@@ -17,6 +17,7 @@ import { useNavigate } from "react-router-dom";
 import { unparse } from "papaparse";
 
 import apiClient from "../../api/client";
+import "./reviewer.css";
 import {
   buildExportRows,
   formatIncidentDate,
@@ -29,7 +30,7 @@ const { RangePicker } = DatePicker;
 
 function renderOptionalValue(value) {
   return value == null || value === "" ? (
-    <span style={{ color: "#999" }}>—</span>
+    <span style={{ color: "var(--ink-faint)" }}>—</span>
   ) : (
     value
   );
@@ -68,7 +69,11 @@ function buildColumns(navigate) {
       dataIndex: "status",
       key: "status",
       // Custom render function to display the status inside a green AntD Tag
-      render: (value) => <Tag color="green">{value}</Tag>,
+      render: (value) => (
+        <Tag color="green" bordered={false}>
+          {value}
+        </Tag>
+      ),
     },
   ];
 
@@ -140,24 +145,45 @@ export default function SearchPortal() {
  // JSX Rendering
  
   return (
-    <div style={{ padding: 24 }}>
-      <h1>Reviewer Case Search</h1>
-      
+    <div className="page">
+      <div className="page-head">
+        <div>
+          <h1>Case search</h1>
+          <p>Processed and reviewed cases, ready for your assessment.</p>
+        </div>
+        <Button icon={<DownloadOutlined />} onClick={handleExportCsv}>
+          Export CSV
+        </Button>
+      </div>
+
       {/* Warning banner shown if JWT logic is bypassed/missing */}
       {!isAuthenticated && (
         <p style={{ color: "#a66", fontSize: 13 }}>
-          No JWT found - showing demo data as an "insurer" role. Log in via Page 0 to see the real
-          role-driven columns.
+          No JWT found - showing demo data as an "insurer" role. Log in via Page
+          0 to see the real role-driven columns.
         </p>
       )}
 
-      {/* Top Metrics Section */}
-      <div style={{ display: "flex", gap: 24, marginBottom: 16 }}>
-        <StatCard label="Pending review" value={data?.pendingReviewCount ?? "—"} />
-        <StatCard label="Total Results" value={cases.length} />
+      <div className="rv-stats">
+        <StatCard
+          label="Pending review"
+          value={data?.pendingReviewCount ?? "—"}
+          tone="amber"
+        />
+        <StatCard label="Total results" value={cases.length} tone="blue" />
       </div>
 
-      <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 16 }}>
+      {/* Filter and Action Bar */}
+      <div className="rv-toolbar">
+        <Input
+          placeholder="Search by case ID or location…"
+          prefix={<SearchOutlined />}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="rv-toolbar__search"
+        />
+        <RangePicker value={dateRange} onChange={setDateRange} />
+        <div className="rv-toolbar__spacer" />
         <Segmented
           aria-label="Case view"
           value={view}
@@ -167,41 +193,6 @@ export default function SearchPortal() {
             { label: "Grid", value: "grid", icon: <LayoutGrid size={14} /> },
           ]}
         />
-      </div>
-
-      {/* Filter and Action Bar */}
-      <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
-        <Input
-          placeholder="Search by Case ID or Location..."
-          prefix={<SearchOutlined />}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{ width: 320 }}
-        />
-        <RangePicker value={dateRange} onChange={setDateRange} />
-        <Button
-          onClick={() => {
-            setSearch("");
-            setDateRange(null);
-          }}
-          disabled={!search && !dateRange}
-        >
-          Clear filters
-        </Button>
-        <span>Showing processed and reviewed cases</span>
-        <Button
-          icon={<DownloadOutlined />}
-          onClick={handleExportCsv}
-          disabled={isExportDisabled({ cases, isFetching, isError })}
-          title="Exports all results matching the current filters, across table pages."
-        >
-          Export CSV
-        </Button>
-        {isFetching && (
-          <span role="status" aria-live="polite">
-            <Spin size="small" /> Loading cases…
-          </span>
-        )}
       </div>
 
       {isError ? (
@@ -219,12 +210,15 @@ export default function SearchPortal() {
           columns={columns}
           pagination={{ pageSize: 10 }}
           locale={{
-            emptyText:
-              shouldShowEmptyState({ isSuccess, isFetching, cases }) ? (
-                <Empty description="No cases found matching your criteria. Try adjusting your search or date filters." />
-              ) : (
-                <span />
-              ),
+            emptyText: shouldShowEmptyState({
+              isSuccess,
+              isFetching,
+              cases,
+            }) ? (
+              <Empty description="No cases found matching your criteria. Try adjusting your search or date filters." />
+            ) : (
+              <span />
+            ),
           }}
         />
       ) : isLoading ? (
@@ -243,7 +237,11 @@ export default function SearchPortal() {
             <Card
               key={caseRecord.id}
               title={caseRecord.caseId}
-              extra={<Tag color="green">{caseRecord.status}</Tag>}
+              extra={
+                <Tag color="green" bordered={false}>
+                  {caseRecord.status}
+                </Tag>
+              }
               actions={[
                 <Button
                   key="details"
@@ -256,6 +254,22 @@ export default function SearchPortal() {
             >
               <p>{renderOptionalValue(caseRecord.location)}</p>
               <p>Incident: {formatIncidentDate(caseRecord.incidentDate)}</p>
+redesigning_demo
+              {effectiveRole === "insurer" ? (
+                <>
+                  <p>
+                    Claim Number: {renderOptionalValue(caseRecord.claimNumber)}
+                  </p>
+                  <p>Insurer: {renderOptionalValue(caseRecord.insurerName)}</p>
+                </>
+              ) : (
+                <p>
+                  Charge / Citation Ref:{" "}
+                  {renderOptionalValue(caseRecord.chargeReference)}
+                </p>
+              )}
+=======
+ main
             </Card>
           ))}
         </div>
@@ -270,11 +284,11 @@ export default function SearchPortal() {
 
  // Reusable small card for displaying top-level metrics.
 
-function StatCard({ label, value }) {
+function StatCard({ label, value, tone = "blue" }) {
   return (
-    <div style={{ border: "1px solid #e5e5e5", borderRadius: 6, padding: "12px 20px", minWidth: 160 }}>
-      <div style={{ fontSize: 12, color: "#666" }}>{label}</div>
-      <div style={{ fontSize: 22, fontWeight: 600 }}>{value}</div>
+    <div className={`rv-stat rv-stat--${tone}`}>
+      <div className="rv-stat__value">{value}</div>
+      <div className="rv-stat__label">{label}</div>
     </div>
   );
 }

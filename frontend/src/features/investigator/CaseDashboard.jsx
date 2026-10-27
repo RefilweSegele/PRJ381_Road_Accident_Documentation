@@ -28,6 +28,7 @@ import CaseMapView from "./views/CaseMapView";
 import CaseQuickViewDrawer from "./CaseQuickViewDrawer";
 import { downloadCasesAsCsv } from "../../utils/exportCsv";
 import { useCaseViewStore } from "./store/useCaseViewStore";
+import { antdTheme } from "../../theme/antdTheme";
 import "./CaseDashboard.css";
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -48,13 +49,8 @@ const VIEW_OPTIONS = [
   { label: "Map", value: "map", icon: <MapPin size={14} /> },
 ];
 
-// Scoped Ant Design theme override — only affects components inside this page.
-const ANTD_THEME = {
-  token: {
-    colorPrimary: "#3b82f6",
-    borderRadius: 10,
-  },
-};
+// The shared app theme (see src/theme/antdTheme.js).
+const ANTD_THEME = antdTheme;
 
 // Delays reacting to a fast-changing value (keystrokes) until it settles.
 function useDebouncedValue(value, delay = 400) {
@@ -194,10 +190,11 @@ function CaseDashboard() {
 
   return (
     <ConfigProvider theme={ANTD_THEME}>
-      <div className="case-dashboard">
+      <div className="case-dashboard page">
+        {" "}
         <div className="case-dashboard__header">
           <div>
-            <h2 className="case-dashboard__title">My Cases</h2>
+            <h1 className="case-dashboard__title">My cases</h1>{" "}
             <p className="case-dashboard__title-sub">
               {pagedQuery.data?.total ?? mapQuery.data?.total ?? 0} case
               {(pagedQuery.data?.total ?? mapQuery.data?.total) === 1
@@ -224,18 +221,20 @@ function CaseDashboard() {
             >
               Refresh
             </Button>
-            <Button type="primary" icon={<Plus size={14} />} href="/investigator/cases/new">
+            <Button
+              type="primary"
+              icon={<Plus size={14} />}
+              href="/investigator/cases/new"
+            >
               New Case
             </Button>
           </div>
         </div>
-
         {/* 4 clickable stat cards — filter table/grid/map when clicked */}
         <DashboardStats
           activeStatus={status}
           onSelectStatus={handleSelectStatCard}
         />
-
         {/* Search + status filter + view switcher, all in one toolbar */}
         <div className="dd-toolbar">
           <div className="dd-search">
@@ -263,7 +262,6 @@ function CaseDashboard() {
           <div className="dd-toolbar__spacer" />
           <Segmented options={VIEW_OPTIONS} value={view} onChange={setView} />
         </div>
-
         {(pagedQuery.isError || mapQuery.isError) && (
           <Alert
             type="error"
@@ -277,7 +275,6 @@ function CaseDashboard() {
             style={{ marginBottom: 16 }}
           />
         )}
-
         {/* Only one of these three renders at a time, based on the view toggle */}
         {view === "table" && (
           <CaseTableView
@@ -295,7 +292,6 @@ function CaseDashboard() {
             onQuickView={setQuickViewCase}
           />
         )}
-
         {view === "grid" && (
           <CaseCardGrid
             data={pagedQuery.data?.data}
@@ -309,7 +305,6 @@ function CaseDashboard() {
             onQuickView={setQuickViewCase}
           />
         )}
-
         {view === "map" && (
           <CaseMapView
             cases={mapQuery.data?.data}

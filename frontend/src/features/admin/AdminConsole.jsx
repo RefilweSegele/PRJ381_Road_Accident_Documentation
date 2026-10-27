@@ -3,6 +3,7 @@ import { Alert, Button, Card, Form, Input, Modal, Popconfirm, Select, Space, Tab
 import { ReloadOutlined, PlusOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../../api/client";
+import "../reviewer/reviewer.css";
 
 const { Title, Text } = Typography;
 const ROLES = ["admin", "investigator", "insurer", "law_enforcement"];
@@ -127,34 +128,138 @@ export default function AdminConsole() {
   ];
 
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>
-      <Space style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", marginBottom: 16 }}>
-        <div><Title level={2} style={{ marginBottom: 0 }}>DAIAS Admin Console</Title><Text type="secondary">User management and processing job monitoring</Text></div>
-        <Button onClick={() => navigate("/reports/generate")}>Report Generator</Button>
-      </Space>
-      {error && <Alert type="error" showIcon message="Unable to load users" description={error} style={{ marginBottom: 16 }} />}
-      <Tabs items={[
-        {
-          key: "users", label: "Users", children: (
-            <Card extra={<Space><Button icon={<ReloadOutlined />} onClick={loadUsers}>Refresh</Button><Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>Add user</Button></Space>}>
-              <Table rowKey={(record) => String(record.id)} columns={userColumns} dataSource={users} loading={loadingUsers} scroll={{ x: 760 }} pagination={{ pageSize: 10 }} />
-            </Card>
-          ),
-        },
-        {
-          key: "jobs", label: "Processing jobs", children: (
-            <Card extra={<Button icon={<ReloadOutlined />} onClick={loadJobs}>Refresh</Button>}>
-              <Table rowKey={(record, index) => String(record.id ?? index)} columns={jobColumns} dataSource={jobs} loading={loadingJobs} scroll={{ x: 600 }} locale={{ emptyText: "No processing jobs available" }} pagination={{ pageSize: 10 }} />
-            </Card>
-          ),
-        },
-      ]} />
-      <Modal title="Create user" open={createOpen} onCancel={() => { setCreateOpen(false); form.resetFields(); }} onOk={() => form.submit()} confirmLoading={creating} okText="Create user" destroyOnHidden>
-        <Form form={form} layout="vertical" onFinish={createUser} autoComplete="off">
-          <Form.Item name="name" label="Full name" rules={[{ required: true, whitespace: true }]}><Input /></Form.Item>
-          <Form.Item name="email" label="Email" rules={[{ required: true }, { type: "email" }]}><Input /></Form.Item>
-          <Form.Item name="password" label="Initial password" rules={[{ required: true }, { min: 12, message: "Use at least 12 characters" }]}><Input.Password autoComplete="new-password" /></Form.Item>
-          <Form.Item name="role" label="Role" initialValue="investigator" rules={[{ required: true }]}><Select options={ROLES.map((role) => ({ value: role, label: role.replaceAll("_", " ") }))} /></Form.Item>
+    <div className="page">
+      <div className="page-head">
+        <div>
+          <h1>Administration</h1>
+          <p>Manage who can sign in and keep an eye on processing jobs.</p>
+        </div>
+        <Button onClick={() => navigate("/reports/generate")}>
+          Open report generator
+        </Button>
+      </div>
+      {error && (
+        <Alert
+          type="error"
+          showIcon
+          message="Unable to load users"
+          description={error}
+          style={{ marginBottom: 16 }}
+        />
+      )}
+      <Tabs
+        items={[
+          {
+            key: "users",
+            label: "Users",
+            children: (
+              <Card
+                extra={
+                  <Space>
+                    <Button icon={<ReloadOutlined />} onClick={loadUsers}>
+                      Refresh
+                    </Button>
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
+                      onClick={() => setCreateOpen(true)}
+                    >
+                      Add user
+                    </Button>
+                  </Space>
+                }
+              >
+                <Table
+                  rowKey={(record) => String(record.id)}
+                  columns={userColumns}
+                  dataSource={users}
+                  loading={loadingUsers}
+                  scroll={{ x: 760 }}
+                  pagination={{ pageSize: 10 }}
+                />
+              </Card>
+            ),
+          },
+          {
+            key: "jobs",
+            label: "Processing jobs",
+            children: (
+              <Card
+                extra={
+                  <Button icon={<ReloadOutlined />} onClick={loadJobs}>
+                    Refresh
+                  </Button>
+                }
+              >
+                <Table
+                  rowKey={(record, index) => String(record.id ?? index)}
+                  columns={jobColumns}
+                  dataSource={jobs}
+                  loading={loadingJobs}
+                  scroll={{ x: 600 }}
+                  locale={{ emptyText: "No processing jobs available" }}
+                  pagination={{ pageSize: 10 }}
+                />
+              </Card>
+            ),
+          },
+        ]}
+      />
+      <Modal
+        title="Create user"
+        open={createOpen}
+        onCancel={() => {
+          setCreateOpen(false);
+          form.resetFields();
+        }}
+        onOk={() => form.submit()}
+        confirmLoading={creating}
+        okText="Create user"
+        destroyOnHidden
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={createUser}
+          autoComplete="off"
+        >
+          <Form.Item
+            name="name"
+            label="Full name"
+            rules={[{ required: true, whitespace: true }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="email"
+            label="Email"
+            rules={[{ required: true }, { type: "email" }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="password"
+            label="Initial password"
+            rules={[
+              { required: true },
+              { min: 12, message: "Use at least 12 characters" },
+            ]}
+          >
+            <Input.Password autoComplete="new-password" />
+          </Form.Item>
+          <Form.Item
+            name="role"
+            label="Role"
+            initialValue="investigator"
+            rules={[{ required: true }]}
+          >
+            <Select
+              options={ROLES.map((role) => ({
+                value: role,
+                label: role.replaceAll("_", " "),
+              }))}
+            />
+          </Form.Item>
         </Form>
       </Modal>
     </div>

@@ -4,7 +4,11 @@ import { Alert, Button, Card, Descriptions, Skeleton, Space } from "antd";
 import { fetchCase } from "../../api/cases";
 import StatusTag from "../../components/common/StatusTag";
 import { formatDate, formatDateTime } from "../../utils/formatDate";
+redesigning_demo
+import "../reviewer/reviewer.css";
+
 import ProcessingPanel from "./ProcessingPanel";
+ main
 
 export default function CaseStatusPage() {
   const { id } = useParams();
@@ -18,12 +22,16 @@ export default function CaseStatusPage() {
   });
 
   if (isLoading) {
+ redesigning_demo
+    return <div className="page" style={{ maxWidth: 840 }}><Skeleton active /></div>;
+
     return <Skeleton active style={{ maxWidth: 800, margin: "40px auto" }} />;
   }
+main
   if (isError || !data) {
     return (
-      <div style={{ maxWidth: 800, margin: "40px auto", padding: 24 }}>
-        <Alert
+     <div className="page" style={{ maxWidth: 840 }}>
+        <Alert        
           type="error"
           showIcon
           message="Case not found"
@@ -35,8 +43,17 @@ export default function CaseStatusPage() {
   }
 
   return (
+ redesigning_demo
+    <div className="page" style={{ maxWidth: 840 }}>
+      <Card
+        className="section-card"
+        title={`Case ${data.caseReference}`}
+        extra={<StatusTag status={data.status} />}
+      >
+=======
     <div style={{ maxWidth: 800, margin: "40px auto", padding: 24 }}>
       <Card title={`Case ${data.caseReference}`} extra={<StatusTag status={data.status} />}>
+ main
         <Descriptions column={1} bordered size="small">
           <Descriptions.Item label="Incident Location">{data.incidentAddress}</Descriptions.Item>
           <Descriptions.Item label="Incident Date">{formatDate(data.incidentDate)}</Descriptions.Item>
@@ -51,4 +68,5 @@ export default function CaseStatusPage() {
       <ProcessingPanel caseId={id} viewerPath={`/investigator/cases/${id}/viewer`} />
     </div>
   );
+}
 }
