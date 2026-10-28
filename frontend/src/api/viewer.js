@@ -9,7 +9,7 @@ export async function analyzeViewCapture(blob, conf = 0.25) {
   form.append("image", blob, "view.jpg"); // field name must match uploadDamageImage.js
   form.append("conf", String(conf));
 
-  const token = localStorage.getItem("jwt_token");
+  const token = localStorage.getItem("authToken");
   const res = await fetch(`${API_BASE}/damage/analyze`, {
     method: "POST",
     headers: token ? { Authorization: `Bearer ${token}` } : {},

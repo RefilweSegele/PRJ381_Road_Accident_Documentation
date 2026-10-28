@@ -15,12 +15,15 @@ export default function ImageDropzone({ caseId, onExistingCountChange }) {
     useEffect(() => {
         let active = true;
         const objectUrls = [];
+        
         fetchCaseImages(caseId)
             .then(async (data) => {
                 if (!active) return;
                 const token = localStorage.getItem('authToken');
+                
                 const withPreviews = await Promise.all((data.images || []).map(async (image) => {
-                    const response = await fetch(image.url, {
+                    // Restored the missing fetch logic and added the thumbnail parameter
+                    const response = await fetch(`${image.url}?thumb=true`, {
                         headers: token ? { Authorization: `Bearer ${token}` } : {},
                     });
                     if (!response.ok) return image;
@@ -28,6 +31,7 @@ export default function ImageDropzone({ caseId, onExistingCountChange }) {
                     objectUrls.push(preview);
                     return { ...image, preview };
                 }));
+                
                 if (!active) return;
                 setSavedImages(withPreviews);
                 onExistingCountChange?.(data.total || 0);
@@ -37,6 +41,7 @@ export default function ImageDropzone({ caseId, onExistingCountChange }) {
                 setSavedImages([]);
                 onExistingCountChange?.(0);
             });
+            
         return () => {
             active = false;
             objectUrls.forEach((url) => URL.revokeObjectURL(url));
@@ -49,7 +54,6 @@ export default function ImageDropzone({ caseId, onExistingCountChange }) {
         }));
 
         setImages([...images, ...newImages]);
-
     }, [images, setImages]);
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -58,16 +62,16 @@ export default function ImageDropzone({ caseId, onExistingCountChange }) {
     });
 
     return (
-        <Card className = "dropzone-card">
+        <Card className="dropzone-card">
             <Title level={4}>Step A: Upload Aerial Imagery — Case {caseId}</Title>
 
-            <div {...getRootProps()} className = {`dropzone-area ${isDragActive ? `active` : ''}`}>
+            <div {...getRootProps()} className={`dropzone-area ${isDragActive ? 'active' : ''}`}>
                 <input {...getInputProps()} />
-                <InboxOutlined className = "dropzone-icon" />
-                <p>Drag and Drop Drone JPEGs her, or click to select files</p>
+                <InboxOutlined className="dropzone-icon" />
+                <p>Drag and Drop Drone JPEGs here, or click to select files</p>
             </div>
 
-            <div className = "thimnail-grid">
+            <div className="thumbnail-grid">
                 {savedImages.map((image) => image.preview ? (
                     <img
                         key={image.id}
@@ -78,19 +82,20 @@ export default function ImageDropzone({ caseId, onExistingCountChange }) {
                 ) : null)}
                 {images.map((file) => (
                     <img
-                        key = {file.name}
-                        src = {file.preview}
-                        alt = "preview"
-                        className = "thumbnail-image"
+                        key={file.name}
+                        src={file.preview}
+                        alt="preview"
+                        className="thumbnail-image"
                     />  
                 ))}
             </div>
+            
             {savedImages.length > 0 ? (
                 <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
                     {savedImages.length} image{savedImages.length === 1 ? '' : 's'} already saved for this case.
                 </Text>
             ) : null}
-            <Text type = 'secondary'>New images ready to upload: {images.length}</Text>
+            <Text type='secondary'>New images ready to upload: {images.length}</Text>
         </Card>
     );
 }

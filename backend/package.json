@@ -8,7 +8,8 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.4.0",
     "obj2gltf": "^3.2.0",
-    "pg": "^8.23.0"
+    "pg": "^8.23.0",
+    "sharp": "^0.35.5"
   },
   "name": "backend",
   "version": "1.0.0",

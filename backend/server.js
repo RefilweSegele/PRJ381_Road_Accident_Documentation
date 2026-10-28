@@ -5,6 +5,7 @@ const path = require("path");
 const fs = require("fs");
 const jwt = require("jsonwebtoken");
 const pool = require("./src/config/db");
+const sharp = require("sharp"); // <-- Added sharp import
 
 const caseRoutes = require("./src/routes/case.routes");
 const authRoutes = require("./src/routes/auth.routes");
@@ -40,9 +41,7 @@ app.get("/", (req, res) => {
   res.send("API is running...");
 });
 
-// Secure File Streaming Endpoint. The storage key is nested (for example,
-// cases/1/images/<uuid>.jpg), so the named wildcard intentionally retains
-// each path segment. Files are never exposed with express.static.
+// Secure File Streaming Endpoint
 app.get("/api/uploads/*storagePath", async (req, res) => {
   const token = req.headers["authorization"] && req.headers["authorization"].split(" ")[1];
 
@@ -64,8 +63,6 @@ app.get("/api/uploads/*storagePath", async (req, res) => {
     }
 
     try {
-      // Only keys registered as evidence records may be streamed. This keeps
-      // arbitrary files beneath LOCAL_ROOT out of reach even for a valid JWT.
       const { rowCount } = await pool.query(
         `SELECT 1 FROM case_images WHERE storage_key = $1
          UNION ALL
@@ -80,6 +77,25 @@ app.get("/api/uploads/*storagePath", async (req, res) => {
       if (!filePath.startsWith(`${path.resolve(storageRoot)}${path.sep}`) || !fs.existsSync(filePath)) {
         return res.status(404).json({ error: "Image file not found" });
       }
+
+      // --- THUMBNAIL LOGIC START ---
+      if (req.query.thumb === 'true') {
+        try {
+          const thumbBuffer = await sharp(filePath)
+            .resize(200, 200, { fit: 'cover' })
+            .jpeg({ quality: 80 })
+            .toBuffer();
+          
+          res.set('Content-Type', 'image/jpeg');
+          res.set('Cache-Control', 'public, max-age=86400');
+          return res.send(thumbBuffer);
+        } catch (sharpError) {
+          console.error("Thumbnail generation failed:", sharpError);
+          // If resizing fails for any reason, fall back to sending the full image
+          return res.sendFile(filePath);
+        }
+      }
+      // --- THUMBNAIL LOGIC END ---
 
       return res.sendFile(filePath);
     } catch (error) {
@@ -117,13 +133,10 @@ app.get("/api/drone-profile", droneProfile);
 // Damage detection test (YOLO segmentation)
 app.use("/api/damage", damageRoutes);
 
-// Upload errors (multer limits, bad file type, case not found) -> proper
-// 400/404/413/415. Must stay BEFORE the generic handler below; it passes
-// anything it doesn't recognise on to it.
+// Upload errors (multer limits, bad file type, case not found)
 app.use(uploadErrorHandler);
 
-// Centralized error handler — catches anything passed to next(err)
-// from the controllers instead of letting the request hang.
+// Centralized error handler
 app.use((err, req, res, next) => {
   console.error(err);
   res.status(500).json({ error: "Internal server error" });
@@ -133,6 +146,5 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
-  // pick up WebODM jobs that were running when the server last stopped
   resumeInterruptedJobs().catch((e) => console.error("Could not resume jobs:", e));
 });

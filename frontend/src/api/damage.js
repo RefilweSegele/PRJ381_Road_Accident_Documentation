@@ -8,7 +8,7 @@ export async function analyzeDamageImage(file, conf = 0.25, signal) {
   form.append("image", file); // must match multer's .single("image")
   form.append("conf", String(conf));
 
-  const token = localStorage.getItem("jwt_token");
+  const token = localStorage.getItem("authToken");
   const res = await fetch(`${API_BASE}/damage/analyze`, {
     method: "POST",
     headers: token ? { Authorization: `Bearer ${token}` } : {},

@@ -13,4 +13,4 @@ const WRITE_ROLES = ["investigator", "admin"];
 router.post("/:id/upload/images", authenticateToken, authorizeRoles(...WRITE_ROLES), requireCase, uploadImages, imageController.uploadImages);
 router.get("/:id/images", authenticateToken, authorizeRoles(...ALL_ROLES), requireCase, imageController.listImages);
 
-module.exports = router;xports = router;
+module.exports = router;

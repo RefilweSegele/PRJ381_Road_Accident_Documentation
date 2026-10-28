@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate, Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   FilePlus2,
@@ -54,6 +54,7 @@ function titleFor(pathname) {
   if (pathname.startsWith("/review/cases/")) return "Case viewer";
   if (pathname.startsWith("/review")) return "Case search";
   if (pathname.startsWith("/admin")) return "Administration";
+  if (pathname.startsWith("/damage-test")) return "Damage Test";
   return "DAIAS";
 }
 
@@ -99,7 +100,6 @@ export default function AppLayout() {
   };
 
   return (
- redesigning_demo
     <div className={`shell ${collapsed ? "shell--collapsed" : ""}`}>
       {mobileOpen && <div className="shell__scrim" onClick={() => setMobileOpen(false)} />}
 
@@ -139,6 +139,18 @@ export default function AppLayout() {
               <span className="rail__label">{label}</span>
             </NavLink>
           ))}
+          {/* Restored the damage test link from the conflict block */}
+          {role === "admin" && (
+             <NavLink 
+                to="/damage-test" 
+                title={collapsed ? "Damage Test" : undefined}
+                className={({ isActive }) => `rail__link ${isActive ? "rail__link--active" : ""}`}
+             >
+               <span className="rail__dash" aria-hidden="true" />
+               <FileText size={18} strokeWidth={1.9} />
+               <span className="rail__label">Damage Test</span>
+             </NavLink>
+          )}
         </nav>
 
         <div className="rail__foot">
@@ -185,34 +197,5 @@ export default function AppLayout() {
         </main>
       </div>
     </div>
-
-    <Layout style={{ minHeight: "100vh" }}>
-      <Header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          background: "#001529",
-          padding: "0 24px",
-        }}
-      >
-        <Typography.Text strong style={{ color: "#fff" }}>
-          DAIAS Portal
-        </Typography.Text>
-        <Space>
-            <Link to="/damage-test" style={{ color: "rgba(255,255,255,0.75)" }}> 
-            Damage Test
-            </Link>
-          {role && <Tag>{ROLE_LABELS[role] || role}</Tag>}
-          <Button icon={<LogoutOutlined />} onClick={handleLogout}>
-            Log out
-          </Button>
-        </Space>
-      </Header>
-      <Content style={{ background: "#f0f2f5" }}>
-        <Outlet />
-      </Content>
-    </Layout>
- main
   );
 }

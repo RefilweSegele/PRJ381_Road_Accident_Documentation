@@ -128,9 +128,12 @@ def main():
     sys.stdout = sys.stderr
     
     try:
-        # Load the JSON list of images passed by Node.js
-        with open(args.manifest_path, 'r', encoding='utf-8') as f:
-            manifest = json.load(f)
+        # Support both JSON manifests and direct JPEG paths
+        if args.manifest_path.lower().endswith(('.jpg', '.jpeg')):
+            manifest = [{"id": 1, "path": args.manifest_path}]
+        else:
+            with open(args.manifest_path, 'r', encoding='utf-8') as f:
+                manifest = json.load(f)
             
         detector = CarDamageDetector()
         
